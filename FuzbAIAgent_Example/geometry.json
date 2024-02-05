@@ -1,0 +1,85 @@
+{
+  "field": {
+    "dimension_x": 1210,
+    "dimension_y":  700
+  },
+
+  "goal_width": 200,
+  "ball_size": 34,
+  "ball_color" : "rgba(255,230,0)",
+
+  "rods": [
+    {
+      "id": 1,
+      "team" : "red",
+      "position": 80,
+      "travel": 190,
+      "players": 1,
+      "first_offset": 258,
+      "spacing": 0
+    },
+    {
+      "id": 2,
+      "team": "red",
+      "position": 230,
+      "travel": 356,
+      "players": 2,
+      "first_offset": 55,
+      "spacing": 238
+    },
+    {
+      "id": 3,
+      "team": "blue",
+      "position": 380,
+      "travel": 180,
+      "players": 3,
+      "first_offset": 55,
+      "spacing": 208
+    },
+    {
+      "id": 4,
+      "team": "red",
+      "position": 530,
+      "travel": 116,
+      "players": 5,
+      "first_offset": 55,
+      "spacing": 118
+    },
+    {
+      "id": 5,
+      "team": "blue",
+      "position": 680,
+      "travel": 116,
+      "players": 5,
+      "first_offset": 55,
+      "spacing": 118
+    },
+    {
+      "id": 6,
+      "team": "red",
+      "position": 830,
+      "travel": 180,
+      "players": 3,
+      "first_offset": 55,
+      "spacing": 208
+    },
+    {
+      "id": 7,
+      "team": "blue",
+      "position": 980,
+      "travel": 356,
+      "players": 2,
+      "first_offset": 55,
+      "spacing": 238
+    },
+    {
+      "id": 8,
+      "team": "blue",
+      "position": 1130,
+      "travel": 190,
+      "players": 1,
+      "first_offset": 258,
+      "spacing": 0
+    }
+  ]
+}
