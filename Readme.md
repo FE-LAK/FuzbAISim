@@ -26,7 +26,7 @@ Igralno žogico se lahko po potrebi premika tudi z miško ('drag&drop').
 
 
 ## Server HTTP REST API za FuzbAISim
-Repozitorij vsebuje tudi HTTP REST API server za FuzbAI v obliki Python datoteke. Za zagon je potrebno namestiti pakete `fastapi`, `uvicorn`
+Repozitorij vsebuje tudi HTTP REST API server za FuzbAI v obliki Python datoteke. Za zagon je potrebno namestiti pakete `fastapi`, `uvicorn` ter `requests`.
 
 Server se požene iz terminala kot
 ```py .\FuzbAISimServer.py```
