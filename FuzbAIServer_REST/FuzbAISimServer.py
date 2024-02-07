@@ -52,9 +52,36 @@ class MotorCommands(BaseModel):
     commands : List[MotorCommand]
 
 @app.get('/Camera/State')
-async def camera_state():     
-    #print(cameraStat)
-    return Response(content=cameraStat, media_type="text/json")       
+async def camera_state(blue : bool | None = None):         
+    stats = cameraStat
+
+    if blue:
+        blueStats = json.loads(stats)
+
+        # Reverse the field
+        blueStats["camData"][0]["ball_x"] = 1210 - blueStats["camData"][0]["ball_x"]
+        blueStats["camData"][0]["ball_y"] = 700 - blueStats["camData"][0]["ball_y"]
+
+        blueStats["camData"][0]["ball_vx"] = -blueStats["camData"][0]["ball_vx"]
+        blueStats["camData"][0]["ball_vy"] = -blueStats["camData"][0]["ball_vy"]
+
+        blueStats["camData"][0]["rod_position_calib"] = [1-blueStats["camData"][0]["rod_position_calib"][7-i] for i in range(8)]
+        blueStats["camData"][0]["rod_angle"] = [-blueStats["camData"][0]["rod_angle"][7-i] for i in range(8)]    
+
+
+        blueStats["camData"][1]["ball_x"] = 1210 - blueStats["camData"][1]["ball_x"]
+        blueStats["camData"][1]["ball_y"] = 700 - blueStats["camData"][1]["ball_y"]
+
+        blueStats["camData"][1]["ball_vx"] = -blueStats["camData"][1]["ball_vx"]
+        blueStats["camData"][1]["ball_vy"] = -blueStats["camData"][1]["ball_vy"]
+
+        blueStats["camData"][1]["rod_position_calib"] = [1-blueStats["camData"][1]["rod_position_calib"][7-i] for i in range(8)]
+        blueStats["camData"][1]["rod_angle"] = [-blueStats["camData"][1]["rod_angle"][7-i] for i in range(8)]    
+
+        stats = json.dumps(blueStats)
+
+    return Response(content=stats, media_type="text/json")       
+
 
 @app.post('/Motors/SendCommand')
 async def send_command(request : Request, blue : bool | None = None): #MotorCommands): 
