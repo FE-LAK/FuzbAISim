@@ -1,0 +1,979 @@
+<?xml version="1.0" ?>
+<robot name="miza_garlando">
+
+<material name="silver">
+  <color rgba="0.700 0.700 0.700 1.000"/>
+</material>
+
+<link name="base_link_1">
+  <inertial>
+    <origin xyz="0.7185000000000001 0.375833654606997 0.17405665806448248" rpy="0 0 0"/>
+    <mass value="538.9061840068997"/>
+    <inertia ixx="43.35359" iyy="136.345875" izz="173.853197" ixy="-0.0" iyz="0.005911" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/base_link_1_frame_0.stl" scale="0.001 0.001 0.001"/>      
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <!--
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/base_link_1.stl" scale="0.001 0.001 0.001"/>      
+    </geometry>
+  </collision>-->
+</link>
+
+<link name="igralec_1_1">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="lezaj_1"> <!-- Palica 1?  -0.1935 -->
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.025632041875721205"/>
+    <inertia ixx="4e-06" iyy="7e-06" izz="4e-06" ixy="0.0" iyz="0.0" ixz="-0.0"/>
+  </inertial>
+</link>
+
+<link name="Palica_1">
+  <inertial>
+    <origin xyz="0 0.4 0" rpy="0 0 0"/>
+    <mass value="0.9667308913626517"/>
+    <inertia ixx="0.051571" iyy="2.4e-05" izz="0.051571" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="lezaj_2"> <!-- Palica 2?  -0.3435  -->
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.025632041875721205"/>
+    <inertia ixx="4e-06" iyy="7e-06" izz="4e-06" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+</link>
+
+<link name="Igralec_2_1">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_2_2">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Palica_3">
+  <inertial>
+    <origin xyz="0 0.4 0" rpy="0 0 0"/>
+    <mass value="0.9667308913626517"/>
+    <inertia ixx="0.051571" iyy="2.4e-05" izz="0.051571" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_3_1">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_3_2">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_3_3">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_4_1">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_4_2">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_4_3">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_4_4">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_4_5">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="lezaj_5"> <!-- Palica 5?  -0.7935 -->
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.025632041875721205"/>
+    <inertia ixx="4e-06" iyy="7e-06" izz="4e-06" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+</link>
+
+<link name="Palica_5">
+  <inertial>
+    <origin xyz="0 0.4 0" rpy="0 0 0"/>
+    <mass value="0.9667308913626517"/>
+    <inertia ixx="0.051571" iyy="2.4e-05" izz="0.051571" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_5_1">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_5_2">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_5_3">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_5_4">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_5_5">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="lezaj_6"> <!-- Palica 6?  -0.9435 -->
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.025632041875721205"/>
+    <inertia ixx="4e-06" iyy="7e-06" izz="4e-06" ixy="-0.0" iyz="0.0" ixz="-0.0"/>
+  </inertial>
+</link>
+
+<link name="Igralec_6_1">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_6_2">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_6_3">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="lezaj_7"> <!-- Palica 7?  -1.0935 -->
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.02563204187572133"/>
+    <inertia ixx="4e-06" iyy="7e-06" izz="4e-06" ixy="0.0" iyz="-0.0" ixz="0.0"/>
+  </inertial>
+</link>
+
+<link name="lezaj_8"> <!-- Palica 7?  -1.2435 -->
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.025632041875721205"/>
+    <inertia ixx="4e-06" iyy="7e-06" izz="4e-06" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+</link>
+
+<link name="Palica_7">
+  <inertial>
+    <origin xyz="0 0.4 0" rpy="0 0 0"/>
+    <mass value="0.9667308913626517"/>
+    <inertia ixx="0.051571" iyy="2.4e-05" izz="0.051571" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Palica_8">
+  <inertial>
+    <origin xyz="0 0.4 0" rpy="0 0 0"/>
+    <mass value="0.9667308913626517"/>
+    <inertia ixx="0.051571" iyy="2.4e-05" izz="0.051571" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_7_1">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_7_2">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Igralec_8_1">
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.20930786514902727"/>
+    <inertia ixx="0.000149" iyy="0.000146" izz="1.8e-05" ixy="-0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/igralec.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="Palica_2">
+  <inertial>
+    <origin xyz="0 0.4 0" rpy="0 0 0"/>
+    <mass value="0.9667308913626517"/>
+    <inertia ixx="0.051571" iyy="2.4e-05" izz="0.051571" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="lezaj_3"> <!-- Palica 3?  -0.4935 -->
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.025632041875721205"/>
+    <inertia ixx="4e-06" iyy="7e-06" izz="4e-06" ixy="-0.0" iyz="0.0" ixz="-0.0"/>
+  </inertial>
+</link>
+
+<link name="Palica_4">
+  <inertial>
+    <origin xyz="0 0.4 0" rpy="0 0 0"/>
+    <mass value="0.9667308913626517"/>
+    <inertia ixx="0.051571" iyy="2.4e-05" izz="0.051571" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+<link name="lezaj_4"> <!-- Palica 4?  -0.6435 -->
+  <inertial>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <mass value="0.025632041875721205"/>
+    <inertia ixx="4e-06" iyy="7e-06" izz="4e-06" ixy="0.0" iyz="0.0" ixz="-0.0"/>
+  </inertial>
+</link>
+
+<link name="Palica_6">
+  <inertial>
+    <origin xyz="0 0.4 0" rpy="0 0 0"/>
+    <mass value="0.9667308913626517"/>
+    <inertia ixx="0.051571" iyy="2.4e-05" izz="0.051571" ixy="0.0" iyz="0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="../meshes/palica.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+
+
+
+
+<joint name="rod1_Revolute" type="revolute">
+  <origin xyz="0.1935 0.025 0.2595" rpy="0 0 0"/>
+  <parent link="base_link_1"/>
+  <child link="lezaj_1"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="3.14159" lower="-3.14159" effort="100" velocity="100"/>
+</joint>
+<joint name="rod2_Revolute" type="revolute">
+  <origin xyz="0.3435 0.025 0.2595" rpy="0 0 0"/>
+  <parent link="base_link_1"/>
+  <child link="lezaj_2"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="3.14159" lower="-3.14159" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod3_Revolute" type="revolute">
+  <origin xyz="0.4935 0.025 0.2595" rpy="0 0 0"/>
+  <parent link="base_link_1"/>
+  <child link="lezaj_3"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="3.14159" lower="-3.14159" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod4_Revolute" type="revolute">
+  <origin xyz="0.6435 0.025 0.2595" rpy="0 0 0"/>
+  <parent link="base_link_1"/>
+  <child link="lezaj_4"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="3.14159" lower="-3.14159" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod5_Revolute" type="revolute">
+  <origin xyz="0.7935 0.025 0.2595" rpy="0 0 0"/>
+  <parent link="base_link_1"/>
+  <child link="lezaj_5"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="3.14159" lower="-3.14159" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod6_Revolute" type="revolute">
+  <origin xyz="0.9435 0.025 0.2595" rpy="0 0 0"/>
+  <parent link="base_link_1"/>
+  <child link="lezaj_6"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="3.14159" lower="-3.14159" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod7_Revolute" type="revolute">
+  <origin xyz="1.0935 0.025 0.2595" rpy="0 0 0"/>
+  <parent link="base_link_1"/>
+  <child link="lezaj_7"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="3.14159" lower="-3.14159" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod8_Revolute" type="revolute">
+  <origin xyz="1.2435 0.025 0.2595" rpy="0 0 0"/>
+  <parent link="base_link_1"/>
+  <child link="lezaj_8"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="3.14159" lower="-3.14159" effort="100" velocity="100"/>
+</joint>
+
+
+
+<joint name="rod1_Slider" type="prismatic">
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <parent link="lezaj_1"/>
+  <child link="Palica_1"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="0.19" lower="0" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod2_Slider" type="prismatic">
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <parent link="lezaj_2"/>
+  <child link="Palica_2"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="0.356" lower="0" effort="100" velocity="100"/>
+</joint>
+<joint name="rod3_Slider" type="prismatic">
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <parent link="lezaj_3"/>
+  <child link="Palica_3"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="0.18" lower="0" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod4_Slider" type="prismatic">
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <parent link="lezaj_4"/>
+  <child link="Palica_4"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="0.116" lower="0" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod5_Slider" type="prismatic">
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <parent link="lezaj_5"/>
+  <child link="Palica_5"/>
+  <axis xyz="-3.982925100842749e-15 1.0 0"/>
+  <limit upper="0.116" lower="0" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod6_Slider" type="prismatic">
+  <origin xyz="0 0 0.0" rpy="0 0 0"/>
+  <parent link="lezaj_6"/>
+  <child link="Palica_6"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="0.18" lower="0" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod7_Slider" type="prismatic">
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <parent link="lezaj_7"/>
+  <child link="Palica_7"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="0.356" lower="0" effort="100" velocity="100"/>
+</joint>
+<joint name="Rod8_Slider" type="prismatic">
+  <origin xyz="0 0 0" rpy="0 0 0"/>
+  <parent link="lezaj_8"/>
+  <child link="Palica_8"/>
+  <axis xyz="0 1 0"/>
+  <limit upper="0.19" lower="0" effort="100" velocity="100"/>
+</joint>
+
+
+
+
+
+
+
+
+
+
+
+<joint name="rod1_Rigid" type="fixed">
+  <origin xyz="0 0.258 0" rpy="0 0 0"/>
+  <parent link="Palica_1"/>
+  <child link="igralec_1_1"/>
+</joint>
+
+<joint name="rod2_Rigid1" type="fixed">
+  <origin xyz="0 0.055 0" rpy="0 0 0"/>
+  <parent link="Palica_2"/>
+  <child link="Igralec_2_1"/>
+</joint>
+<joint name="rod2_Rigid2" type="fixed">
+  <origin xyz="0 0.293 0" rpy="0 0 0"/>
+  <parent link="Palica_2"/>
+  <child link="Igralec_2_2"/>
+</joint>
+
+<joint name="rod3_Rigid1" type="fixed">
+  <origin xyz="0 0.055 0" rpy="0 0 0"/>
+  <parent link="Palica_3"/>
+  <child link="Igralec_3_1"/>
+</joint>
+<joint name="rod3_Rigid2" type="fixed">
+  <origin xyz="0 0.263 0" rpy="0 0 0"/>
+  <parent link="Palica_3"/>
+  <child link="Igralec_3_2"/>
+</joint>
+<joint name="rod3_Rigid3" type="fixed">
+  <origin xyz="0 0.471 0" rpy="0 0 0"/>
+  <parent link="Palica_3"/>
+  <child link="Igralec_3_3"/>
+</joint>
+
+<joint name="rod4_Rigid1" type="fixed">
+  <origin xyz="0 0.055 0" rpy="0 0 0"/>
+  <parent link="Palica_4"/>
+  <child link="Igralec_4_1"/>
+</joint>
+<joint name="rod4_Rigid2" type="fixed">
+  <origin xyz="0 0.173 0" rpy="0 0 0"/>
+  <parent link="Palica_4"/>
+  <child link="Igralec_4_2"/>
+</joint>
+<joint name="rod4_Rigid3" type="fixed">
+  <origin xyz="0 0.291 0" rpy="0 0 0"/>
+  <parent link="Palica_4"/>
+  <child link="Igralec_4_3"/>
+</joint>
+<joint name="rod4_Rigid4" type="fixed">
+  <origin xyz="0 0.409 0" rpy="0 0 0"/>
+  <parent link="Palica_4"/>
+  <child link="Igralec_4_4"/>
+</joint>
+<joint name="rod4_Rigid5" type="fixed">
+  <origin xyz="0 0.527 0" rpy="0 0 0"/>
+  <parent link="Palica_4"/>
+  <child link="Igralec_4_5"/>
+</joint>
+
+
+
+<joint name="rod5_Rigid1" type="fixed">
+  <origin xyz="0 0.055 0" rpy="0 0 0"/>
+  <parent link="Palica_5"/>
+  <child link="Igralec_5_1"/>
+</joint>
+<joint name="rod5_Rigid2" type="fixed">
+  <origin xyz="0 0.173 0" rpy="0 0 0"/>
+  <parent link="Palica_5"/>
+  <child link="Igralec_5_2"/>
+</joint>
+<joint name="rod5_Rigid3" type="fixed">
+  <origin xyz="0 0.291 0" rpy="0 0 0"/>
+  <parent link="Palica_5"/>
+  <child link="Igralec_5_3"/>
+</joint>
+<joint name="rod5_Rigid4" type="fixed">
+  <origin xyz="0 0.409 0" rpy="0 0 0"/>
+  <parent link="Palica_5"/>
+  <child link="Igralec_5_4"/>
+</joint>
+<joint name="rod5_Rigid5" type="fixed">
+  <origin xyz="0 0.527 0" rpy="0 0 0"/>
+  <parent link="Palica_5"/>
+  <child link="Igralec_5_5"/>
+</joint>
+
+
+
+<joint name="rod6_Rigid1" type="fixed">
+  <origin xyz="0 0.055 0" rpy="0 0 0"/>
+  <parent link="Palica_6"/>
+  <child link="Igralec_6_1"/>
+</joint>
+<joint name="rod6_Rigid2" type="fixed">
+  <origin xyz="0 0.263 0" rpy="0 0 0"/>
+  <parent link="Palica_6"/>
+  <child link="Igralec_6_2"/>
+</joint>
+<joint name="rod6_Rigid3" type="fixed">
+  <origin xyz="0 0.471 0" rpy="0 0 0"/>
+  <parent link="Palica_6"/>
+  <child link="Igralec_6_3"/>
+</joint>
+
+
+<joint name="rod7_Rigid1" type="fixed">
+  <origin xyz="0 0.055 0" rpy="0 0 0"/>
+  <parent link="Palica_7"/>
+  <child link="Igralec_7_1"/>
+</joint>
+<joint name="rod7_Rigid2" type="fixed">
+  <origin xyz="0 0.293 0" rpy="0 0 0"/>
+  <parent link="Palica_7"/>
+  <child link="Igralec_7_2"/>
+</joint>
+
+<joint name="rod8_Rigid1" type="fixed">
+  <origin xyz="0 0.258 0" rpy="0 0 0"/>
+  <parent link="Palica_8"/>
+  <child link="Igralec_8_1"/>
+</joint>
+
+
+
+</robot>
