@@ -115,7 +115,7 @@ class FuzbAISim:
                 "ball_vx": ball_vx, "ball_vy": ball_vy, "ball_size": ballSize[1], 
                 "rod_position_calib": rp, "rod_angle": ra }
 
-        return {"camData": [cam1, cam2], "camDataOK": [True, True]}
+        return {"camData": [cam1, cam2], "camDataOK": [True, True], "score": self.score }
 
     def showScore(self):
         if self.scoreDisp is not None:
