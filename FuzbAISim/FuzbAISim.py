@@ -359,7 +359,7 @@ class FuzbAISim:
                             jId_rot = self.revJoints[axisID]
                             jId_lin = self.slideJoints[axisID]
 
-                            refAngle = m["rotationTargetPosition"]*math.pi                
+                            refAngle = m["rotationTargetPosition"]*2*math.pi                
                             p.setJointMotorControl2(self.mizaId, jId_rot, controlMode=p.POSITION_CONTROL, targetPosition=refAngle, force=5, maxVelocity=rotVel*m["rotationVelocity"], positionGain=1, velocityGain=1)  
 
                             refPos = self.applyMotorDeadband(axisID, self.travels[axisID]*(1-m["translationTargetPosition"])/1000)
@@ -381,7 +381,7 @@ class FuzbAISim:
                             jId_rot = self.revJoints[axisID]
                             jId_lin = self.slideJoints[axisID]
 
-                            refAngle = -m["rotationTargetPosition"]*math.pi                
+                            refAngle = -m["rotationTargetPosition"]*2*math.pi                
                             p.setJointMotorControl2(self.mizaId, jId_rot, controlMode=p.POSITION_CONTROL, targetPosition=refAngle, force=5, maxVelocity=rotVel*m["rotationVelocity"], positionGain=1, velocityGain=1)  
 
                             refPos = self.applyMotorDeadband(axisID, self.travels[axisID]*(m["translationTargetPosition"])/1000)
