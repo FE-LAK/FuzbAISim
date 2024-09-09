@@ -340,8 +340,8 @@ class FuzbAISim:
                 self.rodPositions = rodPoses
                 self.rodAngles = angles
 
-                linVel = 0.5
-                rotVel = 50
+                linVel = 1.5910861528058136
+                rotVel = 174.74649915501303
 
                 # Process the agents...
                 if self.t - prev_t > 0.02:  
@@ -360,10 +360,10 @@ class FuzbAISim:
                             jId_lin = self.slideJoints[axisID]
 
                             refAngle = m["rotationTargetPosition"]*2*math.pi                
-                            p.setJointMotorControl2(self.mizaId, jId_rot, controlMode=p.POSITION_CONTROL, targetPosition=refAngle, force=5, maxVelocity=rotVel*m["rotationVelocity"], positionGain=1, velocityGain=1)  
+                            p.setJointMotorControl2(self.mizaId, jId_rot, controlMode=p.POSITION_CONTROL, targetPosition=refAngle, force=2.0943448919793832, maxVelocity=rotVel*m["rotationVelocity"], positionGain=2.817867199313025, velocityGain=7.574019729635704)
 
                             refPos = self.applyMotorDeadband(axisID, self.travels[axisID]*(1-m["translationTargetPosition"])/1000)
-                            p.setJointMotorControl2(self.mizaId, jId_lin, controlMode=p.POSITION_CONTROL, targetPosition=refPos, force=50, maxVelocity=linVel*m["translationVelocity"], positionGain=2, velocityGain=2)            
+                            p.setJointMotorControl2(self.mizaId, jId_lin, controlMode=p.POSITION_CONTROL, targetPosition=refPos, force=13.303989530423438, maxVelocity=linVel*m["translationVelocity"], positionGain=0.19343157707177333, velocityGain=3.9227062400839023)
                     except:
                         print("Exception in agent 1")
 
@@ -382,10 +382,10 @@ class FuzbAISim:
                             jId_lin = self.slideJoints[axisID]
 
                             refAngle = -m["rotationTargetPosition"]*2*math.pi                
-                            p.setJointMotorControl2(self.mizaId, jId_rot, controlMode=p.POSITION_CONTROL, targetPosition=refAngle, force=5, maxVelocity=rotVel*m["rotationVelocity"], positionGain=1, velocityGain=1)  
+                            p.setJointMotorControl2(self.mizaId, jId_rot, controlMode=p.POSITION_CONTROL, targetPosition=refAngle, force=2.0943448919793832, maxVelocity=rotVel*m["rotationVelocity"], positionGain=2.817867199313025, velocityGain=7.574019729635704)
 
                             refPos = self.applyMotorDeadband(axisID, self.travels[axisID]*(m["translationTargetPosition"])/1000)
-                            p.setJointMotorControl2(self.mizaId, jId_lin, controlMode=p.POSITION_CONTROL, targetPosition=refPos, force=50, maxVelocity=linVel*m["translationVelocity"], positionGain=2, velocityGain=2)            
+                            p.setJointMotorControl2(self.mizaId, jId_lin, controlMode=p.POSITION_CONTROL, targetPosition=refPos, force=13.303989530423438, maxVelocity=linVel*m["translationVelocity"], positionGain=0.19343157707177333, velocityGain=3.9227062400839023)
                     except:
                         print("Exception in agent 2")
 
