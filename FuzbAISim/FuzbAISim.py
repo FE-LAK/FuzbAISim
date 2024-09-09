@@ -115,7 +115,12 @@ class FuzbAISim:
                 "ball_vx": ball_vx, "ball_vy": ball_vy, "ball_size": ballSize[1], 
                 "rod_position_calib": rp, "rod_angle": ra }
 
-        return {"camData": [cam1, cam2], "camDataOK": [True, True], "score": self.score }
+        if player == 1:
+            score = self.score.copy()  # Copy otherwise all sampled data will contain the same reference to an array which will update itself.
+        else:
+            score = self.score[::-1]
+
+        return {"camData": [cam1, cam2], "camDataOK": [True, True], "score": score}
 
     def showScore(self):
         if self.scoreDisp is not None:
