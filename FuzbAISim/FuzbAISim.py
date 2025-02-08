@@ -267,7 +267,6 @@ class FuzbAISim:
 
         # Enable realtime simulation
         p.setRealTimeSimulation(1)
-        #p.setTimeStep(1/200) # Not working with realtime simulation
 
     def run(self):
         #self.simThread = threading.Thread(target=lambda: self.__run(), daemon=True)        
