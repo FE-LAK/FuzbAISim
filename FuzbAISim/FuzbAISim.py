@@ -81,7 +81,7 @@ class FuzbAISim:
         camPos = [ [ 100, 350 ],  [ 1100, 350 ]] # Camera position
         z0 = 0.191 # z-position of the ball on the table
 
-        # camCorr = []
+        camCorr = []
         ballSize = []
 
         for ci in range(2):
@@ -89,7 +89,7 @@ class FuzbAISim:
             d = math.sqrt(dPos[0]**2 + dPos[1]**2)    
             
             # Simulate shift in ball position based on ball's z-axis position
-            # camCorr.append([dPos[0] / d * (self.ballPos[2] - z0) * 100,   dPos[1] / d * (self.ballPos[2] - z0) * 100 ])
+            camCorr.append([dPos[0] / d * (self.ballPos[2] - z0) * 100,   dPos[1] / d * (self.ballPos[2] - z0) * 100 ])
             ballSize.append(35 * 1e3/d)
 
         rp = self.rodPositions
@@ -107,12 +107,12 @@ class FuzbAISim:
             ra = [-ra[7-i] for i in range(8)]     
         
         cam1 = { "cameraID": 0, 
-                "ball_x": ball_x + (random.random() - 0.5) * self.ballPosNoise, "ball_y": ball_y + (random.random() - 0.5) * self.ballPosNoise, 
+                "ball_x": ball_x + camCorr[0][0] + (random.random() - 0.5) * self.ballPosNoise, "ball_y": ball_y + camCorr[0][1] + (random.random() - 0.5) * self.ballPosNoise, 
                 "ball_vx": ball_vx, "ball_vy": ball_vy, "ball_size": ballSize[0], 
                 "rod_position_calib": rp, "rod_angle": ra }
 
         cam2 = { "cameraID": 1, 
-                "ball_x": ball_x + (random.random() - 0.5) * self.ballPosNoise, "ball_y": ball_y + (random.random() - 0.5) * self.ballPosNoise, 
+                "ball_x": ball_x + camCorr[1][0] + (random.random() - 0.5) * self.ballPosNoise, "ball_y": ball_y + camCorr[1][1] + (random.random() - 0.5) * self.ballPosNoise, 
                 "ball_vx": ball_vx, "ball_vy": ball_vy, "ball_size": ballSize[1], 
                 "rod_position_calib": rp, "rod_angle": ra }
 
