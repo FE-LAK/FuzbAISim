@@ -28,7 +28,7 @@ time.sleep(0.1)
 
 # Star the update thread
 while sim.isRunning:    
-    #time.sleep(0.02)
+    time.sleep(1e-3)
 
     # Send camera status
     try:

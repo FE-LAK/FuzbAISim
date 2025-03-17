@@ -51,7 +51,7 @@ class FuzbAISim:
         self.p2 = PlayerAgent()
 
         # Camera delay settings
-        self.simulatedDelay = 0.040
+        self.simulatedDelay = 0.03
         self.delayedMemory = []
         self.maxMemory = 0.5 # Maximum delay time
 
@@ -293,6 +293,13 @@ class FuzbAISim:
 
         prev_key_t = 0
 
+
+        PARAM_linVel = 1
+        PARAM_force = 5                                         
+        PARAM_positionGain = 0.2
+        PARAM_velocityGain = 4.5
+
+
         try:    
             while self.isRunning:    
                 self.ballPos, ballOrn = p.getBasePositionAndOrientation(self.ball)        
@@ -350,8 +357,7 @@ class FuzbAISim:
                 
                 self.rodPositions = rodPoses
                 self.rodAngles = angles
-
-                linVel = 1.5910861528058136
+                
                 rotVel = 174.74649915501303
 
                 # Process the agents...
@@ -374,7 +380,11 @@ class FuzbAISim:
                             p.setJointMotorControl2(self.mizaId, jId_rot, controlMode=p.POSITION_CONTROL, targetPosition=refAngle, force=2.0943448919793832, maxVelocity=rotVel*m["rotationVelocity"], positionGain=2.817867199313025, velocityGain=7.574019729635704)
 
                             refPos = self.applyMotorDeadband(axisID, self.travels[axisID]*(1-m["translationTargetPosition"])/1000)
-                            p.setJointMotorControl2(self.mizaId, jId_lin, controlMode=p.POSITION_CONTROL, targetPosition=refPos, force=13.303989530423438, maxVelocity=linVel*m["translationVelocity"], positionGain=0.19343157707177333, velocityGain=3.9227062400839023)
+                            p.setJointMotorControl2(self.mizaId, jId_lin, controlMode=p.POSITION_CONTROL, targetPosition=refPos, 
+                                                    force=PARAM_force, 
+                                                    maxVelocity=PARAM_linVel*m["translationVelocity"], 
+                                                    positionGain=PARAM_positionGain, 
+                                                    velocityGain=PARAM_velocityGain)
                     except:
                         print("Exception in agent 1")
 
@@ -396,7 +406,11 @@ class FuzbAISim:
                             p.setJointMotorControl2(self.mizaId, jId_rot, controlMode=p.POSITION_CONTROL, targetPosition=refAngle, force=2.0943448919793832, maxVelocity=rotVel*m["rotationVelocity"], positionGain=2.817867199313025, velocityGain=7.574019729635704)
 
                             refPos = self.applyMotorDeadband(axisID, self.travels[axisID]*(m["translationTargetPosition"])/1000)
-                            p.setJointMotorControl2(self.mizaId, jId_lin, controlMode=p.POSITION_CONTROL, targetPosition=refPos, force=13.303989530423438, maxVelocity=linVel*m["translationVelocity"], positionGain=0.19343157707177333, velocityGain=3.9227062400839023)
+                            p.setJointMotorControl2(self.mizaId, jId_lin, controlMode=p.POSITION_CONTROL, targetPosition=refPos, 
+                                                    force=PARAM_force, 
+                                                    maxVelocity=PARAM_linVel*m["translationVelocity"], 
+                                                    positionGain=PARAM_positionGain, 
+                                                    velocityGain=PARAM_velocityGain)
                     except:
                         print("Exception in agent 2")
 
@@ -430,6 +444,8 @@ class FuzbAISim:
 
                 if len(keys) > 0:
                     prev_key_t = self.t
+
+                time.sleep(1e-3)
 
             print("Stopping simulation...")
             p.disconnect()
