@@ -1,0 +1,87 @@
+{
+    "teams": [
+        {
+            "id": 1,
+            "name": "Team 1",
+            "proxy_port": 24001,
+            "enabled": true
+        },
+        {
+            "id": 2,
+            "name": "Team 2",
+            "proxy_port": 24002,
+            "enabled": true
+        },
+        {
+            "id": 3,
+            "name": "Team 3",
+            "proxy_port": 24003,
+            "enabled": true
+        },
+        {
+            "id": 4,
+            "name": "Team 4",
+            "proxy_port": 24004,
+            "enabled": true
+        },
+        {
+            "id": 5,
+            "name": "Team 5",
+            "proxy_port": 24005,
+            "enabled": false
+        },
+        {
+            "id": 6,
+            "name": "Team 6",
+            "proxy_port": 24006,
+            "enabled": false
+        },
+        {
+            "id": 7,
+            "name": "Team 7",
+            "proxy_port": 24007,
+            "enabled": false
+        },
+        {
+            "id": 8,
+            "name": "Team 8",
+            "proxy_port": 24008,
+            "enabled": false
+        },
+        {
+            "id": 9,
+            "name": "Team 9",
+            "proxy_port": 24009,
+            "enabled": false
+        },
+        {
+            "id": 10,
+            "name": "Team 10",
+            "proxy_port": 24010,
+            "enabled": false
+        },
+        {
+            "id": 11,
+            "name": "Team 11",
+            "proxy_port": 24011,
+            "enabled": false
+        },
+        {
+            "id": 12,
+            "name": "Team 12",
+            "proxy_port": 24012,
+            "enabled": false
+        }
+    ],
+    "allowed_ips": [ "127.0.0.1" ],
+    "simulators": [
+        {
+            "id": 1,
+            "host": "127.0.0.1",
+            "port_red": 8080,
+            "port_blue": 8081,
+            "port_mgmt": 8000,
+            "enabled": true
+        }
+    ]
+}

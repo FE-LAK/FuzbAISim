@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuzbAI — Tekmovanje 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* ─── Design Tokens ─────────────────────────────────────────────────── */
+        :root {
+            --primary:        hsl(255, 85%, 75%);
+            --primary-glow:   hsla(255, 85%, 75%, 0.25);
+            --bg:             hsl(225, 25%, 3%);
+            --card-bg:        hsla(225, 25%, 10%, 0.7);
+            --card-border:    hsla(0, 0%, 100%, 0.08);
+            --text:           hsl(210, 20%, 98%);
+            --text-muted:     hsl(215, 15%, 65%);
+            --accent:         hsl(335, 80%, 65%);
+            --success:        hsl(155, 65%, 50%);
+            --success-dim:    hsla(155, 65%, 50%, 0.15);
+            --warning:        hsl(35, 85%, 60%);
+            --glass:          hsla(225, 25%, 3%, 0.92);
+            --green:          hsl(100, 60%, 55%);
+            --green-dim:      hsla(100, 60%, 55%, 0.12);
+            --loser-dim:      hsla(215, 15%, 65%, 0.12);
+            --match-glow:     hsla(255, 85%, 75%, 0.4);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        /* ─── Reset & Base ──────────────────────────────────────────────────── */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(ellipse at 20% 20%, hsla(255, 85%, 55%, 0.08) 0%, transparent 55%),
+                radial-gradient(ellipse at 80% 80%, hsla(155, 65%, 40%, 0.07) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 100%, hsla(335, 80%, 50%, 0.06) 0%, transparent 45%);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.1;
+        }
+
+        /* ─── Live Badge ────────────────────────────────────────────────────── */
+        #live-badge {
+            position: fixed;
+            top: 28px;
+            right: 36px;
+            z-index: 900;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: hsla(0, 80%, 50%, 0.18);
+            border: 1px solid hsla(0, 80%, 60%, 0.4);
+            border-radius: 999px;
+            padding: 8px 20px 8px 14px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: hsl(0, 90%, 65%);
+            backdrop-filter: blur(8px);
+        }
+
+        #live-badge.visible {
+            display: flex;
+        }
+
+        #live-badge .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: hsl(0, 90%, 60%);
+            animation: pulse-dot 1.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.4; transform: scale(0.75); }
+        }
+
+        /* ─── View Container ────────────────────────────────────────────────── */
+        .view {
+            position: fixed;
+            inset: 0;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .view.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ─── Overlay Message ───────────────────────────────────────────────── */
+        #overlay-msg {
+            position: fixed;
+            inset: 0;
+            z-index: 800;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: hsla(225, 25%, 3%, 0.72);
+            backdrop-filter: blur(6px);
+        }
+
+        #overlay-msg.visible {
+            display: flex;
+        }
+
+        #overlay-msg .msg-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-xl);
+            padding: 60px 80px;
+            text-align: center;
+            max-width: 80vw;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 80px hsla(255, 85%, 75%, 0.12);
+        }
+
+        #overlay-msg .msg-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2rem, 4vw, 4.5rem);
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* VIEW 1 — TITLE                                                      */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #view-title {
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 0;
+        }
+
+        .title-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+            padding: 40px;
+        }
+
+        .title-logo {
+            width: 220px;
+            height: 220px;
+            border-radius: var(--radius-xl);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .title-logo .logo-fe {
+            font-family: 'Outfit', sans-serif;
+            font-size: 64px;
+            font-weight: 900;
+            color: var(--green);
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+
+        .title-logo .logo-lak {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 6px;
+            text-transform: uppercase;
+        }
+
+        .title-event {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.4rem, 2.6vw, 3.2rem);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text);
+            max-width: 900px;
+            line-height: 1.15;
+        }
+
+        .title-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 7rem);
+            font-weight: 900;
+            color: var(--success);
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .title-divider {
+            width: 120px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--success), transparent);
+            border-radius: 2px;
+        }
+
+        .title-date {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.2rem, 2vw, 2rem);
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+
+        .title-lab {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(0.9rem, 1.4vw, 1.4rem);
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* VIEW 2 — BRACKET                                                    */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #view-bracket {
+            padding: 24px 20px 16px;
+            overflow: hidden;
+        }
+
+        .bracket-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .bracket-header h1 {
+            font-size: clamp(1.6rem, 2.8vw, 3rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .bracket-tree {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 0;
+            height: calc(100vh - 120px);
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .bracket-round {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            flex: 1;
+            min-width: 0;
+            padding: 0 6px;
+            position: relative;
+        }
+
+        .round-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.65rem, 1vw, 1rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .bracket-pair {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 6px 8px;
+            backdrop-filter: blur(8px);
+            position: relative;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            margin: 4px 0;
+        }
+
+        .bracket-pair.active-match {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow), inset 0 0 20px hsla(255, 85%, 75%, 0.04);
+            animation: pair-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pair-pulse {
+            0%, 100% { box-shadow: 0 0 20px var(--primary-glow); }
+            50%       { box-shadow: 0 0 35px hsla(255, 85%, 75%, 0.55); }
+        }
+
+        .bracket-team {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 4px;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s;
+        }
+
+        .bracket-team.winner {
+            background: var(--success-dim);
+        }
+
+        .bracket-team.loser {
+            opacity: 0.4;
+        }
+
+        .team-seed {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.6rem, 0.85vw, 0.9rem);
+            font-weight: 700;
+            color: var(--text-muted);
+            min-width: 20px;
+            text-align: right;
+        }
+
+        .team-name-bracket {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.65rem, 0.95vw, 1.05rem);
+            font-weight: 700;
+            color: var(--text);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bracket-team.winner .team-name-bracket {
+            color: var(--success);
+        }
+
+        .team-score-bracket {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.65rem, 0.95vw, 1.05rem);
+            font-weight: 800;
+            min-width: 22px;
+            text-align: right;
+            color: var(--text-muted);
+        }
+
+        .bracket-team.winner .team-score-bracket {
+            color: var(--success);
+        }
+
+        .bracket-vs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1px 0;
+        }
+
+        .bracket-vs-line {
+            height: 1px;
+            flex: 1;
+            background: var(--card-border);
+        }
+
+        .bracket-vs-text {
+            font-size: clamp(0.5rem, 0.7vw, 0.7rem);
+            color: var(--text-muted);
+            opacity: 0.5;
+            padding: 0 4px;
+        }
+
+        /* Connector lines between rounds */
+        .bracket-connector {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 18px;
+            position: relative;
+        }
+
+        /* Finals column layout */
+        .bracket-finals {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            flex: 1;
+            min-width: 0;
+            padding: 0 6px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* VIEW 3 — CURRENT MATCH                                              */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #view-match {
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .match-container {
+            width: 100%;
+            max-width: 1600px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .match-round-label {
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1rem, 1.8vw, 2rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--primary);
+        }
+
+        .match-teams {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .match-team {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-xl);
+            padding: 40px 36px;
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .match-team.team-left {
+            align-items: flex-start;
+            border-right: 2px solid var(--card-border);
+        }
+
+        .match-team.team-right {
+            align-items: flex-end;
+            border-left: 2px solid var(--card-border);
+        }
+
+        .match-team.team-winner {
+            border-color: var(--success);
+            box-shadow: 0 0 40px hsla(155, 65%, 50%, 0.15);
+        }
+
+        .match-seed-badge {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.9rem, 1.3vw, 1.4rem);
+            font-weight: 600;
+            color: var(--text-muted);
+            background: hsla(215, 15%, 65%, 0.1);
+            border: 1px solid var(--card-border);
+            border-radius: 999px;
+            padding: 4px 14px;
+        }
+
+        .match-team-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2rem, 4.5vw, 5.5rem);
+            font-weight: 900;
+            color: var(--text);
+            line-height: 1;
+            word-break: break-word;
+        }
+
+        .match-team.team-winner .match-team-name {
+            color: var(--success);
+        }
+
+        .match-games {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .match-game-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(0.9rem, 1.4vw, 1.6rem);
+        }
+
+        .match-game-label {
+            color: var(--text-muted);
+            font-weight: 500;
+            min-width: 70px;
+        }
+
+        .match-game-score {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            color: var(--text);
+            font-size: clamp(1.1rem, 1.8vw, 2rem);
+        }
+
+        .match-game-score.score-win {
+            color: var(--success);
+        }
+
+        .match-game-score.score-loss {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        /* Center VS column */
+        .match-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .match-vs-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2rem, 4vw, 5rem);
+            font-weight: 900;
+            color: var(--primary);
+            opacity: 0.6;
+        }
+
+        .match-total-card {
+            background: var(--card-bg);
+            border: 1px solid var(--primary);
+            border-radius: var(--radius-lg);
+            padding: 20px 32px;
+            backdrop-filter: blur(12px);
+            text-align: center;
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+
+        .match-total-label {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.75rem, 1.1vw, 1.2rem);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .match-total-score {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 6rem);
+            font-weight: 900;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .match-total-t1 { color: var(--text); }
+        .match-total-sep { color: var(--text-muted); font-weight: 400; }
+        .match-total-t2 { color: var(--text); }
+
+        .match-status-bar {
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.9rem, 1.4vw, 1.6rem);
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .status-live {
+            color: hsl(0, 90%, 65%);
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.4; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* VIEW 4 — STANDINGS                                                  */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #view-standings {
+            padding: 28px 48px 24px;
+            overflow: hidden;
+        }
+
+        .standings-header {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .standings-header h1 {
+            font-size: clamp(2rem, 3.5vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--text) 0%, var(--success) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .standings-table-wrap {
+            width: 100%;
+            height: calc(100vh - 130px);
+            overflow: hidden;
+        }
+
+        table.standings-tbl {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 6px;
+        }
+
+        table.standings-tbl thead th {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.75rem, 1.1vw, 1.2rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            text-align: left;
+        }
+
+        table.standings-tbl thead th:not(:first-child):not(:nth-child(2)) {
+            text-align: center;
+        }
+
+        table.standings-tbl tbody tr {
+            background: var(--card-bg);
+            border-radius: var(--radius-md);
+            transition: background 0.2s;
+        }
+
+        table.standings-tbl tbody tr.advancing {
+            background: hsla(155, 65%, 50%, 0.08);
+        }
+
+        table.standings-tbl tbody tr.advancing td:first-child {
+            border-left: 3px solid var(--success);
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+        }
+
+        table.standings-tbl tbody tr.eliminated td:first-child {
+            border-left: 3px solid transparent;
+        }
+
+        table.standings-tbl tbody tr.eliminated {
+            opacity: 0.5;
+        }
+
+        table.standings-tbl tbody td {
+            padding: 10px 16px;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.9rem, 1.4vw, 1.6rem);
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        table.standings-tbl tbody td:not(:first-child):not(:nth-child(2)) {
+            text-align: center;
+        }
+
+        .rank-cell {
+            font-size: clamp(1rem, 1.5vw, 1.8rem);
+            font-weight: 800;
+            color: var(--text-muted);
+            min-width: 60px;
+        }
+
+        .rank-cell.top3 {
+            color: var(--warning);
+        }
+
+        .name-cell {
+            font-size: clamp(1rem, 1.6vw, 1.9rem);
+            font-weight: 700;
+        }
+
+        .pts-cell {
+            font-size: clamp(1.1rem, 1.7vw, 2rem);
+            font-weight: 900;
+            color: var(--success);
+        }
+
+        .adv-divider {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 4px 0 8px;
+        }
+
+        .adv-divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--success);
+            opacity: 0.3;
+        }
+
+        .adv-divider-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.7rem, 1vw, 1rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--success);
+            opacity: 0.6;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* VIEW 5 — TEAM SPOTLIGHT                                             */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #view-team {
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+        }
+
+        .team-spotlight-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-xl);
+            padding: 60px 80px;
+            backdrop-filter: blur(16px);
+            text-align: center;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 40px 80px hsla(225, 25%, 3%, 0.5), 0 0 60px var(--primary-glow);
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .team-spotlight-label {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.9rem, 1.4vw, 1.4rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+        }
+
+        .team-spotlight-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(3rem, 7vw, 8rem);
+            font-weight: 900;
+            color: var(--text);
+            line-height: 1;
+            word-break: break-word;
+        }
+
+        .team-spotlight-divider {
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 2px;
+            margin: 0 auto;
+        }
+
+        .team-stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .team-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .team-stat-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2rem, 4vw, 5rem);
+            font-weight: 900;
+            color: var(--success);
+            line-height: 1;
+        }
+
+        .team-stat-label {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(0.8rem, 1.1vw, 1.2rem);
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .team-bracket-info {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1rem, 1.6vw, 1.8rem);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* ─── Loading / Error states ────────────────────────────────────────── */
+        .placeholder-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.2rem, 2vw, 2.4rem);
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+            opacity: 0.5;
+        }
+
+        /* ─── SSE status indicator ──────────────────────────────────────────── */
+        #sse-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            color: var(--text-muted);
+            opacity: 0.4;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #sse-status .sse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        #sse-status.disconnected .sse-dot {
+            background: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── Live Badge ──────────────────────────────────────────────────── -->
+    <div id="live-badge">
+        <span class="dot"></span>
+        V ŽIVO
+    </div>
+
+    <!-- ─── Overlay Message ─────────────────────────────────────────────── -->
+    <div id="overlay-msg">
+        <div class="msg-box">
+            <div class="msg-text" id="overlay-msg-text"></div>
+        </div>
+    </div>
+
+    <!-- ─── VIEW 1: Title ──────────────────────────────────────────────── -->
+    <div id="view-title" class="view active">
+        <div class="title-inner">
+            <div class="title-logo">
+                <span class="logo-fe">FE</span>
+                <span class="logo-lak">LAK</span>
+            </div>
+            <div class="title-event">Dnevi avtomatike in umetne inteligence 2026</div>
+            <div class="title-name">Tekmovanje FuzbAI</div>
+            <div class="title-divider"></div>
+            <div class="title-date">21. april 2026 &mdash; dnevi-avtomatike.si</div>
+            <div class="title-lab">Laboratorij za avtomatiko in kibernetiko (LAK)</div>
+        </div>
+    </div>
+
+    <!-- ─── VIEW 2: Bracket ─────────────────────────────────────────────── -->
+    <div id="view-bracket" class="view">
+        <div class="bracket-header">
+            <h1>Turnirska lestvica</h1>
+        </div>
+        <div class="bracket-tree" id="bracket-tree">
+            <div class="placeholder-text">Nalagam...</div>
+        </div>
+    </div>
+
+    <!-- ─── VIEW 3: Match ──────────────────────────────────────────────── -->
+    <div id="view-match" class="view">
+        <div class="match-container">
+            <div class="match-round-label" id="match-round-label">—</div>
+            <div class="match-teams">
+                <!-- Team 1 -->
+                <div class="match-team team-left" id="match-team1">
+                    <div class="match-seed-badge" id="match-seed1">#1</div>
+                    <div class="match-team-name" id="match-name1">Ekipa 1</div>
+                    <div class="match-games" id="match-games1">
+                        <div class="match-game-row">
+                            <span class="match-game-label">Igra 1</span>
+                            <span class="match-game-score" id="match-g1-t1s">—</span>
+                        </div>
+                        <div class="match-game-row">
+                            <span class="match-game-label">Igra 2</span>
+                            <span class="match-game-score" id="match-g2-t1s">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center -->
+                <div class="match-center">
+                    <div class="match-vs-text">VS</div>
+                    <div class="match-total-card">
+                        <div class="match-total-label">Skupaj točke</div>
+                        <div class="match-total-score">
+                            <span class="match-total-t1" id="match-pts1">0</span>
+                            <span class="match-total-sep">:</span>
+                            <span class="match-total-t2" id="match-pts2">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team 2 -->
+                <div class="match-team team-right" id="match-team2">
+                    <div class="match-seed-badge" id="match-seed2">#2</div>
+                    <div class="match-team-name" id="match-name2">Ekipa 2</div>
+                    <div class="match-games" id="match-games2">
+                        <div class="match-game-row">
+                            <span class="match-game-label">Igra 1</span>
+                            <span class="match-game-score" id="match-g1-t2s">—</span>
+                        </div>
+                        <div class="match-game-row">
+                            <span class="match-game-label">Igra 2</span>
+                            <span class="match-game-score" id="match-g2-t2s">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="match-status-bar" id="match-status">V teku</div>
+        </div>
+    </div>
+
+    <!-- ─── VIEW 4: Standings ───────────────────────────────────────────── -->
+    <div id="view-standings" class="view">
+        <div class="standings-header">
+            <h1>Kvalifikacije &mdash; Lestvica</h1>
+        </div>
+        <div class="standings-table-wrap">
+            <table class="standings-tbl" id="standings-tbl">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Ekipa</th>
+                        <th>Točke</th>
+                        <th>Gol razlika</th>
+                        <th>Goli</th>
+                    </tr>
+                </thead>
+                <tbody id="standings-body">
+                    <tr><td colspan="5" class="placeholder-text">Nalagam...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ─── VIEW 5: Team Spotlight ─────────────────────────────────────── -->
+    <div id="view-team" class="view">
+        <div class="team-spotlight-card">
+            <div class="team-spotlight-label">Ekipa</div>
+            <div class="team-spotlight-name" id="team-name">—</div>
+            <div class="team-spotlight-divider"></div>
+            <div class="team-stats-row" id="team-stats">
+                <div class="team-stat">
+                    <div class="team-stat-value" id="team-rank">—</div>
+                    <div class="team-stat-label">Uvrstitev</div>
+                </div>
+                <div class="team-stat">
+                    <div class="team-stat-value" id="team-pts">—</div>
+                    <div class="team-stat-label">Točke</div>
+                </div>
+                <div class="team-stat">
+                    <div class="team-stat-value" id="team-goals">—</div>
+                    <div class="team-stat-label">Goli</div>
+                </div>
+            </div>
+            <div class="team-bracket-info" id="team-bracket-info"></div>
+        </div>
+    </div>
+
+    <!-- ─── SSE status ──────────────────────────────────────────────────── -->
+    <div id="sse-status">
+        <span class="sse-dot"></span>
+        <span id="sse-status-text">SSE</span>
+    </div>
+
+    <script>
+    // ─────────────────────────────────────────────────────────────────────────
+    // State & cache
+    // ─────────────────────────────────────────────────────────────────────────
+    let vizState = { view: 'title', live: false, message: '', match_id: null, round_name: null, team_id: null };
+    let bracketData = null;
+    let standingsData = null;
+    let currentView = 'title';
+
+    const ROUND_NAMES = {
+        'round_of_16': 'Osmina finala',
+        'quarter_final': 'Četrtfinale',
+        'semi_final': 'Polfinale',
+        'third_place': 'Tekma za 3. mesto',
+        'final': 'Finale'
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // View switching
+    // ─────────────────────────────────────────────────────────────────────────
+    function switchView(viewName) {
+        if (currentView === viewName) return;
+        const views = document.querySelectorAll('.view');
+        views.forEach(v => v.classList.remove('active'));
+        const next = document.getElementById('view-' + viewName);
+        if (next) {
+            next.classList.add('active');
+            currentView = viewName;
+        } else {
+            // Fallback to title
+            const title = document.getElementById('view-title');
+            if (title) title.classList.add('active');
+            currentView = 'title';
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Apply full viz state
+    // ─────────────────────────────────────────────────────────────────────────
+    function applyVizState(state) {
+        vizState = { ...vizState, ...state };
+
+        // Live badge
+        const liveBadge = document.getElementById('live-badge');
+        if (state.live) {
+            liveBadge.classList.add('visible');
+        } else {
+            liveBadge.classList.remove('visible');
+        }
+
+        // Overlay message
+        const overlayEl = document.getElementById('overlay-msg');
+        const msgText = document.getElementById('overlay-msg-text');
+        if (state.message && state.message.trim()) {
+            msgText.textContent = state.message;
+            overlayEl.classList.add('visible');
+        } else {
+            overlayEl.classList.remove('visible');
+        }
+
+        // Switch view
+        const view = state.view || 'title';
+        switchView(view);
+
+        // Update content based on view
+        if (view === 'standings') {
+            renderStandings();
+        } else if (view === 'bracket') {
+            renderBracket();
+        } else if (view === 'match') {
+            renderMatch(state.match_id, state.round_name);
+        } else if (view === 'team') {
+            renderTeam(state.team_id);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Fetch helpers
+    // ─────────────────────────────────────────────────────────────────────────
+    async function fetchBracket() {
+        try {
+            const res = await fetch('/api/tournament/bracket');
+            if (!res.ok) return;
+            bracketData = await res.json();
+        } catch (e) {
+            console.warn('Bracket fetch error:', e);
+        }
+    }
+
+    async function fetchStandings() {
+        try {
+            const res = await fetch('/api/results/standings');
+            if (!res.ok) return;
+            standingsData = await res.json();
+        } catch (e) {
+            console.warn('Standings fetch error:', e);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RENDER: Standings
+    // ─────────────────────────────────────────────────────────────────────────
+    async function renderStandings() {
+        if (!standingsData) await fetchStandings();
+        const tbody = document.getElementById('standings-body');
+        if (!standingsData || !standingsData.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:40px;">Ni podatkov</td></tr>';
+            return;
+        }
+
+        const sorted = [...standingsData].sort((a, b) => a.rank - b.rank);
+        let html = '';
+        sorted.forEach((team, i) => {
+            const rank = team.rank || (i + 1);
+            const advancing = rank <= 16;
+            const cls = advancing ? 'advancing' : 'eliminated';
+            const rankCls = rank <= 3 ? 'rank-cell top3' : 'rank-cell';
+
+            // Divider after rank 16
+            if (rank === 17) {
+                html += `<tr style="background:none;"><td colspan="5">
+                    <div class="adv-divider">
+                        <div class="adv-divider-line"></div>
+                        <div class="adv-divider-text">Meja napredovanja</div>
+                        <div class="adv-divider-line"></div>
+                    </div>
+                </td></tr>`;
+            }
+
+            html += `<tr class="${cls}">
+                <td class="${rankCls}">${rank}.</td>
+                <td class="name-cell">${esc(team.name)}</td>
+                <td class="pts-cell">${formatNum(team.pts)}</td>
+                <td>${team.goal_diff >= 0 ? '+' : ''}${formatNum(team.goal_diff)}</td>
+                <td>${formatNum(team.goals_for)}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RENDER: Bracket
+    // ─────────────────────────────────────────────────────────────────────────
+    async function renderBracket() {
+        if (!bracketData) await fetchBracket();
+        const container = document.getElementById('bracket-tree');
+
+        if (!bracketData || !bracketData.bracket) {
+            container.innerHTML = '<div class="placeholder-text">Turnir še ni začet</div>';
+            return;
+        }
+
+        const bracket = bracketData.bracket;
+        const roundOrder = ['round_of_16', 'quarter_final', 'semi_final', 'final'];
+        const roundsFinal = ['third_place', 'final'];
+
+        // Collect active pairs
+        const activePairs = new Set();
+        if (bracketData.state && bracketData.state.active_pairs) {
+            bracketData.state.active_pairs.forEach(id => activePairs.add(id));
+        }
+
+        let html = '';
+
+        // Main rounds
+        const mainRounds = roundOrder.filter(r => bracket[r] && bracket[r].pairs && bracket[r].pairs.length > 0);
+
+        mainRounds.forEach(roundKey => {
+            const round = bracket[roundKey];
+            const label = ROUND_NAMES[roundKey] || roundKey;
+
+            html += `<div class="bracket-round">
+                <div class="round-label">${label}</div>`;
+
+            round.pairs.forEach(pair => {
+                const isActive = activePairs.has(pair.id);
+                const pairCls = isActive ? 'bracket-pair active-match' : 'bracket-pair';
+
+                const t1pts = pair.duel_score ? pair.duel_score.team1_total_points : null;
+                const t2pts = pair.duel_score ? pair.duel_score.team2_total_points : null;
+                const hasWinner = !!pair.winner_id;
+                const t1win = hasWinner && pair.winner_id === pair.team1_id;
+                const t2win = hasWinner && pair.winner_id === pair.team2_id;
+
+                const t1cls = hasWinner ? (t1win ? 'bracket-team winner' : 'bracket-team loser') : 'bracket-team';
+                const t2cls = hasWinner ? (t2win ? 'bracket-team winner' : 'bracket-team loser') : 'bracket-team';
+
+                const t1name = pair.team1_name || '?';
+                const t2name = pair.team2_name || '?';
+                const t1seed = pair.team1_seed ? `#${pair.team1_seed}` : '';
+                const t2seed = pair.team2_seed ? `#${pair.team2_seed}` : '';
+                const t1score = t1pts !== null ? formatNum(t1pts) : '—';
+                const t2score = t2pts !== null ? formatNum(t2pts) : '—';
+
+                html += `<div class="${pairCls}">
+                    <div class="${t1cls}">
+                        <span class="team-seed">${t1seed}</span>
+                        <span class="team-name-bracket">${esc(t1name)}</span>
+                        <span class="team-score-bracket">${t1score}</span>
+                    </div>
+                    <div class="bracket-vs">
+                        <div class="bracket-vs-line"></div>
+                        <span class="bracket-vs-text">vs</span>
+                        <div class="bracket-vs-line"></div>
+                    </div>
+                    <div class="${t2cls}">
+                        <span class="team-seed">${t2seed}</span>
+                        <span class="team-name-bracket">${esc(t2name)}</span>
+                        <span class="team-score-bracket">${t2score}</span>
+                    </div>
+                </div>`;
+            });
+
+            html += `</div>`; // bracket-round
+        });
+
+        // Finals column (3rd place + final side by side)
+        const hasFinals = roundsFinal.some(r => bracket[r] && bracket[r].pairs && bracket[r].pairs.length > 0);
+        if (hasFinals) {
+            html += `<div class="bracket-round">
+                <div class="round-label">Zaključek</div>`;
+
+            roundsFinal.forEach(roundKey => {
+                if (!bracket[roundKey] || !bracket[roundKey].pairs || !bracket[roundKey].pairs.length) return;
+                const round = bracket[roundKey];
+                const label = ROUND_NAMES[roundKey] || roundKey;
+
+                round.pairs.forEach(pair => {
+                    const isActive = activePairs.has(pair.id);
+                    const pairCls = isActive ? 'bracket-pair active-match' : 'bracket-pair';
+                    const t1pts = pair.duel_score ? pair.duel_score.team1_total_points : null;
+                    const t2pts = pair.duel_score ? pair.duel_score.team2_total_points : null;
+                    const hasWinner = !!pair.winner_id;
+                    const t1win = hasWinner && pair.winner_id === pair.team1_id;
+                    const t2win = hasWinner && pair.winner_id === pair.team2_id;
+                    const t1cls = hasWinner ? (t1win ? 'bracket-team winner' : 'bracket-team loser') : 'bracket-team';
+                    const t2cls = hasWinner ? (t2win ? 'bracket-team winner' : 'bracket-team loser') : 'bracket-team';
+                    const t1name = pair.team1_name || '?';
+                    const t2name = pair.team2_name || '?';
+                    const t1seed = pair.team1_seed ? `#${pair.team1_seed}` : '';
+                    const t2seed = pair.team2_seed ? `#${pair.team2_seed}` : '';
+                    const t1score = t1pts !== null ? formatNum(t1pts) : '—';
+                    const t2score = t2pts !== null ? formatNum(t2pts) : '—';
+
+                    html += `<div style="margin-bottom:6px; font-size:clamp(0.6rem,0.8vw,0.85rem); color:var(--primary); font-family:'Outfit',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; text-align:center;">${label}</div>
+                    <div class="${pairCls}" style="margin-bottom: 12px;">
+                        <div class="${t1cls}">
+                            <span class="team-seed">${t1seed}</span>
+                            <span class="team-name-bracket">${esc(t1name)}</span>
+                            <span class="team-score-bracket">${t1score}</span>
+                        </div>
+                        <div class="bracket-vs">
+                            <div class="bracket-vs-line"></div>
+                            <span class="bracket-vs-text">vs</span>
+                            <div class="bracket-vs-line"></div>
+                        </div>
+                        <div class="${t2cls}">
+                            <span class="team-seed">${t2seed}</span>
+                            <span class="team-name-bracket">${esc(t2name)}</span>
+                            <span class="team-score-bracket">${t2score}</span>
+                        </div>
+                    </div>`;
+                });
+            });
+
+            html += `</div>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RENDER: Match
+    // ─────────────────────────────────────────────────────────────────────────
+    async function renderMatch(matchId, roundName) {
+        if (!bracketData) await fetchBracket();
+
+        // Find pair
+        let pair = null;
+        if (matchId && bracketData && bracketData.bracket) {
+            outer:
+            for (const roundKey of Object.keys(bracketData.bracket)) {
+                const round = bracketData.bracket[roundKey];
+                if (!round.pairs) continue;
+                for (const p of round.pairs) {
+                    if (p.id === matchId) {
+                        pair = p;
+                        break outer;
+                    }
+                }
+            }
+        }
+
+        // If no specific pair, find active match
+        if (!pair && bracketData && bracketData.bracket) {
+            outer2:
+            for (const roundKey of Object.keys(bracketData.bracket)) {
+                const round = bracketData.bracket[roundKey];
+                if (!round.pairs) continue;
+                for (const p of round.pairs) {
+                    if (!p.winner_id && p.team1_id && p.team2_id) {
+                        pair = p;
+                        break outer2;
+                    }
+                }
+            }
+        }
+
+        if (!pair) {
+            setMatchPlaceholder();
+            return;
+        }
+
+        // Round label
+        const rKey = pair.round || '';
+        const rName = roundName || ROUND_NAMES[rKey] || rKey || '—';
+        document.getElementById('match-round-label').textContent = rName.toUpperCase();
+
+        // Team names & seeds
+        document.getElementById('match-name1').textContent = pair.team1_name || '—';
+        document.getElementById('match-name2').textContent = pair.team2_name || '—';
+        document.getElementById('match-seed1').textContent = pair.team1_seed ? `#${pair.team1_seed}` : '—';
+        document.getElementById('match-seed2').textContent = pair.team2_seed ? `#${pair.team2_seed}` : '—';
+
+        // Game scores
+        const g1 = pair.games && pair.games.find(g => g.game_number === 1);
+        const g2 = pair.games && pair.games.find(g => g.game_number === 2);
+
+        const g1t1s = g1 ? formatNum(g1.team1_score) : '—';
+        const g1t2s = g1 ? formatNum(g1.team2_score) : '—';
+        const g2t1s = g2 ? formatNum(g2.team1_score) : '—';
+        const g2t2s = g2 ? formatNum(g2.team2_score) : '—';
+
+        setScoreEl('match-g1-t1s', g1t1s, g1 ? (g1.team1_score > g1.team2_score) : null);
+        setScoreEl('match-g2-t1s', g2t1s, g2 ? (g2.team1_score > g2.team2_score) : null);
+        setScoreEl('match-g1-t2s', g1t2s, g1 ? (g1.team2_score > g1.team1_score) : null);
+        setScoreEl('match-g2-t2s', g2t2s, g2 ? (g2.team2_score > g2.team1_score) : null);
+
+        // Total points
+        const ds = pair.duel_score || {};
+        const pts1 = ds.team1_total_points !== undefined ? formatNum(ds.team1_total_points) : '0';
+        const pts2 = ds.team2_total_points !== undefined ? formatNum(ds.team2_total_points) : '0';
+        document.getElementById('match-pts1').textContent = pts1;
+        document.getElementById('match-pts2').textContent = pts2;
+
+        // Winner highlighting
+        const t1el = document.getElementById('match-team1');
+        const t2el = document.getElementById('match-team2');
+        t1el.classList.remove('team-winner');
+        t2el.classList.remove('team-winner');
+        if (pair.winner_id) {
+            if (pair.winner_id === pair.team1_id) t1el.classList.add('team-winner');
+            else if (pair.winner_id === pair.team2_id) t2el.classList.add('team-winner');
+        }
+
+        // Status
+        const statusEl = document.getElementById('match-status');
+        if (pair.winner_id) {
+            const winnerName = pair.winner_id === pair.team1_id ? pair.team1_name : pair.team2_name;
+            statusEl.innerHTML = `Zmagovalec: <span style="color:var(--success); font-weight:900;">${esc(winnerName)}</span>`;
+        } else {
+            statusEl.innerHTML = '<span class="status-live">&#9679; V teku</span>';
+        }
+    }
+
+    function setScoreEl(id, value, winning) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = value;
+        el.className = 'match-game-score';
+        if (winning === true) el.classList.add('score-win');
+        else if (winning === false) el.classList.add('score-loss');
+    }
+
+    function setMatchPlaceholder() {
+        document.getElementById('match-round-label').textContent = '—';
+        document.getElementById('match-name1').textContent = 'Ekipa 1';
+        document.getElementById('match-name2').textContent = 'Ekipa 2';
+        document.getElementById('match-seed1').textContent = '#—';
+        document.getElementById('match-seed2').textContent = '#—';
+        document.getElementById('match-g1-t1s').textContent = '—';
+        document.getElementById('match-g2-t1s').textContent = '—';
+        document.getElementById('match-g1-t2s').textContent = '—';
+        document.getElementById('match-g2-t2s').textContent = '—';
+        document.getElementById('match-pts1').textContent = '0';
+        document.getElementById('match-pts2').textContent = '0';
+        document.getElementById('match-status').textContent = 'Čakam na podatke...';
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RENDER: Team Spotlight
+    // ─────────────────────────────────────────────────────────────────────────
+    async function renderTeam(teamId) {
+        if (!teamId) {
+            document.getElementById('team-name').textContent = '—';
+            return;
+        }
+
+        if (!standingsData) await fetchStandings();
+
+        const team = standingsData && standingsData.find(t => t.id === teamId);
+        if (!team) {
+            document.getElementById('team-name').textContent = 'Neznana ekipa';
+            return;
+        }
+
+        document.getElementById('team-name').textContent = team.name || '—';
+        document.getElementById('team-rank').textContent = team.rank ? `${team.rank}.` : '—';
+        document.getElementById('team-pts').textContent = formatNum(team.pts);
+        document.getElementById('team-goals').textContent = `${formatNum(team.goals_for)} / ${formatNum(team.goals_against)}`;
+
+        // Bracket info
+        const bracketInfoEl = document.getElementById('team-bracket-info');
+        if (bracketData && bracketData.bracket) {
+            let foundRound = null;
+            outer:
+            for (const roundKey of Object.keys(bracketData.bracket)) {
+                const round = bracketData.bracket[roundKey];
+                if (!round.pairs) continue;
+                for (const p of round.pairs) {
+                    if (p.team1_id === teamId || p.team2_id === teamId) {
+                        foundRound = roundKey;
+                        break outer;
+                    }
+                }
+            }
+            if (foundRound) {
+                bracketInfoEl.textContent = `Turnir: ${ROUND_NAMES[foundRound] || foundRound}`;
+            } else {
+                bracketInfoEl.textContent = '';
+            }
+        } else {
+            bracketInfoEl.textContent = '';
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Utilities
+    // ─────────────────────────────────────────────────────────────────────────
+    function esc(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function formatNum(n) {
+        if (n === null || n === undefined) return '0';
+        return Number.isInteger(n) ? String(n) : parseFloat(n).toFixed(1);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // SSE Connection
+    // ─────────────────────────────────────────────────────────────────────────
+    let sseSource = null;
+
+    function connectSSE() {
+        if (sseSource) {
+            sseSource.close();
+        }
+
+        sseSource = new EventSource('/api/tournament/viz-stream');
+
+        sseSource.onopen = () => {
+            setSSEStatus(true);
+        };
+
+        sseSource.onmessage = (e) => {
+            try {
+                const msg = JSON.parse(e.data);
+                if (msg.type === 'viz_update' && msg.data) {
+                    applyVizState(msg.data);
+                }
+                // Refresh bracket data on any update
+                fetchBracket().then(() => {
+                    if (currentView === 'bracket') renderBracket();
+                    else if (currentView === 'match') renderMatch(vizState.match_id, vizState.round_name);
+                    else if (currentView === 'team') renderTeam(vizState.team_id);
+                });
+            } catch (err) {
+                console.warn('SSE parse error:', err);
+            }
+        };
+
+        sseSource.onerror = () => {
+            setSSEStatus(false);
+            sseSource.close();
+            // Reconnect after delay
+            setTimeout(connectSSE, 3000);
+        };
+    }
+
+    function setSSEStatus(connected) {
+        const el = document.getElementById('sse-status');
+        const txt = document.getElementById('sse-status-text');
+        if (connected) {
+            el.classList.remove('disconnected');
+            txt.textContent = 'V živo';
+        } else {
+            el.classList.add('disconnected');
+            txt.textContent = 'Prekinjena povezava';
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Periodic refresh
+    // ─────────────────────────────────────────────────────────────────────────
+    setInterval(async () => {
+        await fetchBracket();
+        if (currentView === 'bracket') renderBracket();
+        else if (currentView === 'match') renderMatch(vizState.match_id, vizState.round_name);
+        else if (currentView === 'standings') renderStandings();
+        else if (currentView === 'team') renderTeam(vizState.team_id);
+    }, 5000);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Startup
+    // ─────────────────────────────────────────────────────────────────────────
+    async function init() {
+        // Fetch initial viz state
+        try {
+            const res = await fetch('/api/tournament/viz-state');
+            if (res.ok) {
+                const state = await res.json();
+                // Pre-fetch data
+                await Promise.all([fetchBracket(), fetchStandings()]);
+                applyVizState(state);
+            }
+        } catch (e) {
+            console.warn('Initial state fetch error:', e);
+        }
+
+        // Connect SSE
+        connectSSE();
+    }
+
+    init();
+    </script>
+</body>
+</html>

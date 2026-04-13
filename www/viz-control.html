@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuzbAI Arena — Nadzor vizualizacije</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: hsl(255, 85%, 75%);
+            --primary-glow: hsla(255, 85%, 75%, 0.3);
+            --bg: hsl(225, 25%, 3%);
+            --card-bg: hsla(225, 25%, 10%, 0.7);
+            --card-border: hsla(0, 0%, 100%, 0.08);
+            --text: hsl(210, 20%, 98%);
+            --text-muted: hsl(215, 15%, 65%);
+            --accent: hsl(335, 80%, 65%);
+            --success: hsl(155, 65%, 50%);
+            --warning: hsl(35, 85%, 60%);
+            --glass: hsla(225, 25%, 3%, 0.9);
+            --danger: hsl(0, 75%, 60%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.08) 0px, transparent 50%);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* ── Header ── */
+        .glass-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+            justify-content: space-between;
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            white-space: nowrap;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 4px;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid transparent;
+            transition: all 0.18s;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+            background: var(--card-bg);
+            border-color: var(--card-border);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            background: hsla(255, 85%, 75%, 0.1);
+            border-color: var(--primary-glow);
+        }
+
+        /* ── Layout ── */
+        .main {
+            margin-top: 68px;
+            padding: 16px 24px 32px;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 16px 18px;
+            backdrop-filter: blur(8px);
+        }
+
+        .card-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-title .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        /* ── Current State ── */
+        .state-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .state-item {
+            background: hsla(225, 25%, 6%, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .state-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .state-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .state-value.view-badge {
+            color: var(--primary);
+        }
+
+        .state-value.live-on {
+            color: var(--success);
+        }
+
+        .state-value.live-off {
+            color: var(--text-muted);
+        }
+
+        /* ── View Selector ── */
+        .view-btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .view-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 14px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: hsla(225, 25%, 8%, 0.6);
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            text-align: center;
+        }
+
+        .view-btn:hover {
+            border-color: var(--primary-glow);
+            color: var(--text);
+            background: hsla(255, 85%, 75%, 0.07);
+        }
+
+        .view-btn.active {
+            background: hsla(255, 85%, 75%, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 14px var(--primary-glow);
+        }
+
+        .view-btn .view-sub {
+            display: block;
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            font-weight: 400;
+            margin-top: 2px;
+            opacity: 0.6;
+        }
+
+        /* ── Match / Team selector ── */
+        .section-hidden {
+            display: none;
+        }
+
+        .match-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .match-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .match-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .match-list::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 2px;
+        }
+
+        .round-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            padding: 4px 0 2px;
+            margin-top: 6px;
+        }
+
+        .round-label:first-child {
+            margin-top: 0;
+        }
+
+        .match-btn {
+            width: 100%;
+            text-align: left;
+            padding: 9px 13px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: hsla(225, 25%, 8%, 0.5);
+            color: var(--text);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .match-btn:hover {
+            border-color: var(--primary-glow);
+            background: hsla(255, 85%, 75%, 0.07);
+        }
+
+        .match-btn.active {
+            border-color: var(--primary);
+            background: hsla(255, 85%, 75%, 0.12);
+        }
+
+        .match-btn .match-round-chip {
+            font-size: 10px;
+            font-weight: 600;
+            background: hsla(255, 85%, 75%, 0.15);
+            color: var(--primary);
+            border-radius: 4px;
+            padding: 2px 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .match-btn .match-teams {
+            font-weight: 500;
+        }
+
+        .match-btn .match-status {
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .status-active {
+            background: hsla(155, 65%, 50%, 0.15);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: hsla(35, 85%, 60%, 0.12);
+            color: var(--warning);
+        }
+
+        .status-completed {
+            background: hsla(215, 15%, 65%, 0.1);
+            color: var(--text-muted);
+        }
+
+        /* ── Select / Team ── */
+        .styled-select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: hsla(225, 25%, 8%, 0.6);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+            transition: border-color 0.15s;
+        }
+
+        .styled-select:focus {
+            outline: none;
+            border-color: var(--primary-glow);
+        }
+
+        .styled-select option {
+            background: hsl(225, 25%, 8%);
+            color: var(--text);
+        }
+
+        /* ── Controls Row ── */
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Toggle */
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: hsla(225, 25%, 8%, 0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 8px 14px;
+            flex-shrink: 0;
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            user-select: none;
+        }
+
+        .toggle-label.on {
+            color: var(--success);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 42px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            background: hsla(215, 15%, 65%, 0.2);
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .toggle-thumb {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            top: 3px;
+            left: 3px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .toggle-switch input:checked ~ .toggle-track {
+            background: hsla(155, 65%, 50%, 0.2);
+            border-color: hsla(155, 65%, 50%, 0.4);
+        }
+
+        .toggle-switch input:checked ~ .toggle-thumb {
+            transform: translateX(18px);
+            background: var(--success);
+        }
+
+        /* Message input */
+        .msg-group {
+            flex: 1;
+            display: flex;
+            gap: 6px;
+            min-width: 200px;
+        }
+
+        .msg-input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: hsla(225, 25%, 8%, 0.6);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            transition: border-color 0.15s;
+        }
+
+        .msg-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .msg-input:focus {
+            outline: none;
+            border-color: var(--primary-glow);
+        }
+
+        /* ── Buttons ── */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: hsla(255, 85%, 75%, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: hsla(255, 85%, 75%, 0.25);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .btn-ghost {
+            background: hsla(225, 25%, 8%, 0.5);
+            border-color: var(--card-border);
+            color: var(--text-muted);
+        }
+
+        .btn-ghost:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .btn-danger {
+            background: hsla(0, 75%, 60%, 0.1);
+            border-color: hsla(0, 75%, 60%, 0.3);
+            color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: hsla(0, 75%, 60%, 0.2);
+        }
+
+        .btn-success {
+            background: hsla(155, 65%, 50%, 0.1);
+            border-color: hsla(155, 65%, 50%, 0.3);
+            color: var(--success);
+        }
+
+        .btn-success:hover {
+            background: hsla(155, 65%, 50%, 0.2);
+        }
+
+        /* ── Quick Actions ── */
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Poll indicator ── */
+        .poll-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--success);
+            display: inline-block;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.7); }
+        }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #toast.ok {
+            border-color: hsla(155, 65%, 50%, 0.4);
+            color: var(--success);
+        }
+
+        #toast.err {
+            border-color: hsla(0, 75%, 60%, 0.4);
+            color: var(--danger);
+        }
+
+        /* ── Loading ── */
+        .loading-text {
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 10px 0;
+        }
+
+        /* ── Divider ── */
+        .section-divider {
+            border: none;
+            border-top: 1px solid var(--card-border);
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="glass-header">
+    <span class="logo-text">FuzbAI Arena — Nadzor vizualizacije</span>
+    <nav class="nav-links">
+        <a href="/qualifications" class="nav-link">Kvalifikacije</a>
+        <a href="/tournament" class="nav-link">Turnir</a>
+        <a href="/viz-control" class="nav-link active">Vizualizacija</a>
+    </nav>
+</header>
+
+<main class="main">
+
+    <!-- ── 1. Current State ── -->
+    <div class="card">
+        <div class="card-title">
+            <span class="poll-dot"></span>
+            Trenutno stanje vizualizacije
+        </div>
+        <div class="state-grid" id="stateGrid">
+            <div class="state-item">
+                <div class="state-label">Pogled</div>
+                <div class="state-value view-badge" id="stateView">—</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">Tekma</div>
+                <div class="state-value" id="stateMatch">—</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">V živo</div>
+                <div class="state-value" id="stateLive">—</div>
+            </div>
+            <div class="state-item">
+                <div class="state-label">Sporočilo</div>
+                <div class="state-value" id="stateMessage" style="font-size:13px;">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 2. View Selector ── -->
+    <div class="card">
+        <div class="card-title"><span class="dot"></span>Izbor pogleda</div>
+        <div class="view-btn-row" id="viewBtnRow">
+            <button class="view-btn" data-view="title" onclick="setView('title')">
+                Naslov
+                <span class="view-sub">title</span>
+            </button>
+            <button class="view-btn" data-view="bracket" onclick="setView('bracket')">
+                Bracket
+                <span class="view-sub">bracket</span>
+            </button>
+            <button class="view-btn" data-view="match" onclick="setView('match')">
+                Tekma
+                <span class="view-sub">match</span>
+            </button>
+            <button class="view-btn" data-view="standings" onclick="setView('standings')">
+                Lestvica
+                <span class="view-sub">standings</span>
+            </button>
+            <button class="view-btn" data-view="team" onclick="setView('team')">
+                Ekipa
+                <span class="view-sub">team</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ── 3. Match Selector ── -->
+    <div class="card" id="matchSelectorCard">
+        <div class="card-title"><span class="dot"></span>Izbor tekme</div>
+        <div id="matchListContainer">
+            <div class="loading-text">Nalaganje tekem…</div>
+        </div>
+    </div>
+
+    <!-- ── 4. Team Selector ── -->
+    <div class="card" id="teamSelectorCard" style="display:none;">
+        <div class="card-title"><span class="dot"></span>Izbor ekipe</div>
+        <select class="styled-select" id="teamSelect" onchange="setTeam(this.value)">
+            <option value="">— Izberi ekipo —</option>
+        </select>
+    </div>
+
+    <!-- ── 5. Controls Row ── -->
+    <div class="card">
+        <div class="card-title"><span class="dot"></span>Upravljanje</div>
+        <div class="controls-row">
+            <!-- Live toggle -->
+            <div class="toggle-group">
+                <span class="toggle-label" id="liveLabel">V živo</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="liveToggle" onchange="setLive(this.checked)">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                </label>
+            </div>
+
+            <!-- Message -->
+            <div class="msg-group">
+                <input type="text" class="msg-input" id="msgInput" placeholder="Sporočilo za prikaz…" maxlength="200"
+                       onkeydown="if(event.key==='Enter') sendMessage()">
+                <button class="btn btn-primary" onclick="sendMessage()">Pošlji</button>
+                <button class="btn btn-ghost" onclick="clearMessage()">Počisti</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 6. Quick Actions ── -->
+    <div class="card">
+        <div class="card-title"><span class="dot"></span>Hitra dejanja</div>
+        <div class="quick-actions">
+            <button class="btn btn-success" onclick="refreshViz()">↻ Osveži vizualizacijo</button>
+        </div>
+    </div>
+
+</main>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let currentVizState = {
+    view: null,
+    match_id: null,
+    round_name: null,
+    team_id: null,
+    live: false,
+    message: ''
+};
+
+const ROUND_NAMES = {
+    'round_of_16': 'Osmina finala',
+    'quarter_final': 'Četrtfinale',
+    'semi_final': 'Polfinale',
+    'third_place': 'Tekma za 3. mesto',
+    'final': 'Finale'
+};
+
+// ── API helpers ────────────────────────────────────────────────────────────
+async function apiGet(path) {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+async function apiPost(path, body) {
+    const res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type = 'ok') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = ''; }, 2200);
+}
+
+// ── Poll viz-state every 2s ────────────────────────────────────────────────
+async function pollVizState() {
+    try {
+        const data = await apiGet('/api/tournament/viz-state');
+        applyVizState(data, false);
+    } catch (e) {
+        // silent fail
+    }
+}
+
+function applyVizState(data, updateControls = true) {
+    currentVizState = { ...currentVizState, ...data };
+
+    // State display
+    document.getElementById('stateView').textContent = data.view ?? '—';
+
+    if (data.match_id) {
+        document.getElementById('stateMatch').textContent = `#${data.match_id}`;
+    } else {
+        document.getElementById('stateMatch').textContent = '—';
+    }
+
+    const liveEl = document.getElementById('stateLive');
+    if (data.live) {
+        liveEl.textContent = 'DA';
+        liveEl.className = 'state-value live-on';
+    } else {
+        liveEl.textContent = 'NE';
+        liveEl.className = 'state-value live-off';
+    }
+
+    document.getElementById('stateMessage').textContent = data.message || '—';
+
+    // Highlight active view button
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === data.view);
+    });
+
+    // Show/hide selectors
+    const view = data.view;
+    const showMatch = view === 'match' || view === 'bracket';
+    const showTeam = view === 'team';
+    document.getElementById('matchSelectorCard').style.display = showMatch ? '' : 'none';
+    document.getElementById('teamSelectorCard').style.display = showTeam ? '' : 'none';
+
+    // Highlight active match button
+    document.querySelectorAll('.match-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.matchId) === data.match_id);
+    });
+
+    // Highlight active team in select
+    if (updateControls) {
+        if (data.team_id !== undefined) {
+            document.getElementById('teamSelect').value = data.team_id ?? '';
+        }
+        if (data.live !== undefined) {
+            document.getElementById('liveToggle').checked = !!data.live;
+            updateLiveLabel(!!data.live);
+        }
+        if (data.message !== undefined) {
+            // Don't overwrite what operator is typing
+        }
+    } else {
+        // Always keep toggle in sync
+        document.getElementById('liveToggle').checked = !!data.live;
+        updateLiveLabel(!!data.live);
+        // Update team select
+        if (data.team_id !== undefined) {
+            const sel = document.getElementById('teamSelect');
+            if (document.activeElement !== sel) {
+                sel.value = data.team_id ?? '';
+            }
+        }
+    }
+}
+
+function updateLiveLabel(isLive) {
+    const label = document.getElementById('liveLabel');
+    label.textContent = 'V živo';
+    label.className = isLive ? 'toggle-label on' : 'toggle-label';
+}
+
+// ── Load matches ───────────────────────────────────────────────────────────
+async function loadMatches() {
+    try {
+        const data = await apiGet('/api/tournament/games');
+        renderMatches(data);
+    } catch (e) {
+        document.getElementById('matchListContainer').innerHTML =
+            '<div class="loading-text">Napaka pri nalaganju tekem</div>';
+    }
+}
+
+function renderMatches(data) {
+    const container = document.getElementById('matchListContainer');
+
+    // Group by round: active → pending → completed
+    const allGames = [
+        ...(data.active || []).map(g => ({ ...g, _status: 'active' })),
+        ...(data.pending || []).map(g => ({ ...g, _status: 'pending' })),
+        ...(data.completed || []).map(g => ({ ...g, _status: 'completed' }))
+    ];
+
+    if (allGames.length === 0) {
+        container.innerHTML = '<div class="loading-text">Ni razpoložljivih tekem</div>';
+        return;
+    }
+
+    // Group by round
+    const rounds = {};
+    allGames.forEach(game => {
+        const r = game.round || 'unknown';
+        if (!rounds[r]) rounds[r] = [];
+        rounds[r].push(game);
+    });
+
+    const roundOrder = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final', 'unknown'];
+
+    let html = '<div class="match-list" id="matchList">';
+    roundOrder.forEach(roundKey => {
+        if (!rounds[roundKey]) return;
+        const roundLabel = ROUND_NAMES[roundKey] || roundKey;
+        html += `<div class="round-label">${roundLabel}</div>`;
+        rounds[roundKey].forEach(game => {
+            const t1 = game.team1_name || `Ekipa ${game.team1_id}`;
+            const t2 = game.team2_name || `Ekipa ${game.team2_id}`;
+            const statusClass = `status-${game._status}`;
+            const statusLabel = game._status === 'active' ? 'V teku' :
+                                game._status === 'pending' ? 'Čaka' : 'Konec';
+            const chipLabel = `G${game.game_number || 1}`;
+            html += `
+            <button class="match-btn" data-match-id="${game.id}" data-round="${roundKey}"
+                    onclick="setMatch(${game.id}, '${roundKey}')">
+                <span class="match-round-chip">${chipLabel}</span>
+                <span class="match-teams">${t1} vs ${t2}</span>
+                <span class="match-status ${statusClass}">${statusLabel}</span>
+            </button>`;
+        });
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    // Highlight current
+    document.querySelectorAll('.match-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.matchId) === currentVizState.match_id);
+    });
+}
+
+// ── Load teams ─────────────────────────────────────────────────────────────
+async function loadTeams() {
+    try {
+        const data = await apiGet('/api/results/standings');
+        const sel = document.getElementById('teamSelect');
+        sel.innerHTML = '<option value="">— Izberi ekipo —</option>';
+        (data || []).forEach(team => {
+            const opt = document.createElement('option');
+            opt.value = team.id;
+            opt.textContent = `#${team.rank} ${team.name}`;
+            sel.appendChild(opt);
+        });
+        if (currentVizState.team_id) {
+            sel.value = currentVizState.team_id;
+        }
+    } catch (e) {
+        // silent
+    }
+}
+
+// ── View actions ───────────────────────────────────────────────────────────
+async function setView(view) {
+    try {
+        await apiPost('/api/tournament/viz-state', { view });
+        currentVizState.view = view;
+        applyVizState({ view, match_id: currentVizState.match_id, round_name: currentVizState.round_name, team_id: currentVizState.team_id, live: currentVizState.live, message: currentVizState.message });
+        showToast(`Pogled: ${view}`);
+    } catch (e) {
+        showToast('Napaka pri nastavljanju pogleda', 'err');
+    }
+}
+
+async function setMatch(matchId, roundName) {
+    try {
+        const payload = { match_id: matchId, round_name: roundName };
+        await apiPost('/api/tournament/viz-state', payload);
+        currentVizState.match_id = matchId;
+        currentVizState.round_name = roundName;
+        document.querySelectorAll('.match-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.matchId) === matchId);
+        });
+        document.getElementById('stateMatch').textContent = `#${matchId}`;
+        showToast(`Tekma #${matchId} izbrana`);
+    } catch (e) {
+        showToast('Napaka pri izbiri tekme', 'err');
+    }
+}
+
+async function setTeam(teamId) {
+    if (!teamId) return;
+    try {
+        await apiPost('/api/tournament/viz-state', { team_id: parseInt(teamId) });
+        currentVizState.team_id = parseInt(teamId);
+        showToast(`Ekipa #${teamId} izbrana`);
+    } catch (e) {
+        showToast('Napaka pri izbiri ekipe', 'err');
+    }
+}
+
+async function setLive(isLive) {
+    try {
+        await apiPost('/api/tournament/viz-state', { live: isLive });
+        currentVizState.live = isLive;
+        updateLiveLabel(isLive);
+        showToast(isLive ? 'V živo: VKLOPLJENO' : 'V živo: IZKLOPLJENO');
+    } catch (e) {
+        showToast('Napaka pri nastavljanju live', 'err');
+        // revert
+        document.getElementById('liveToggle').checked = !isLive;
+        updateLiveLabel(!isLive);
+    }
+}
+
+async function sendMessage() {
+    const input = document.getElementById('msgInput');
+    const msg = input.value.trim();
+    try {
+        await apiPost('/api/tournament/viz-state', { message: msg });
+        currentVizState.message = msg;
+        document.getElementById('stateMessage').textContent = msg || '—';
+        showToast('Sporočilo poslano');
+    } catch (e) {
+        showToast('Napaka pri pošiljanju sporočila', 'err');
+    }
+}
+
+async function clearMessage() {
+    document.getElementById('msgInput').value = '';
+    try {
+        await apiPost('/api/tournament/viz-state', { message: '' });
+        currentVizState.message = '';
+        document.getElementById('stateMessage').textContent = '—';
+        showToast('Sporočilo počiščeno');
+    } catch (e) {
+        showToast('Napaka', 'err');
+    }
+}
+
+async function refreshViz() {
+    try {
+        // Re-post entire current state to force-refresh displays
+        const payload = {
+            view: currentVizState.view,
+            match_id: currentVizState.match_id,
+            round_name: currentVizState.round_name,
+            team_id: currentVizState.team_id,
+            live: currentVizState.live,
+            message: currentVizState.message
+        };
+        // Remove nulls
+        Object.keys(payload).forEach(k => { if (payload[k] == null) delete payload[k]; });
+        await apiPost('/api/tournament/viz-state', payload);
+        showToast('Vizualizacija osvežena');
+    } catch (e) {
+        showToast('Napaka pri osveževanju', 'err');
+    }
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+async function init() {
+    // Load initial state
+    try {
+        const data = await apiGet('/api/tournament/viz-state');
+        applyVizState(data, true);
+    } catch (e) {
+        // ignore
+    }
+
+    // Load matches and teams
+    loadMatches();
+    loadTeams();
+
+    // Start polling
+    setInterval(pollVizState, 2000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

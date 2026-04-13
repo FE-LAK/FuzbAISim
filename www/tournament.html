@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuzbAI Arena — Turnir</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: hsl(255, 85%, 75%);
+            --primary-glow: hsla(255, 85%, 75%, 0.3);
+            --bg: hsl(225, 25%, 3%);
+            --card-bg: hsla(225, 25%, 10%, 0.7);
+            --card-border: hsla(0, 0%, 100%, 0.08);
+            --text: hsl(210, 20%, 98%);
+            --text-muted: hsl(215, 15%, 65%);
+            --accent: hsl(335, 80%, 65%);
+            --success: hsl(155, 65%, 50%);
+            --warning: hsl(35, 85%, 60%);
+            --glass: hsla(225, 25%, 3%, 0.9);
+            --danger: hsl(0, 75%, 60%);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.1) 0px, transparent 50%);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        h1, h2, h3, h4 { font-family: 'Outfit', sans-serif; }
+
+        /* ===== HEADER ===== */
+        .glass-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 70px;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            justify-content: space-between;
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+
+        .logo-icon {
+            width: 36px; height: 36px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links { display: flex; gap: 4px; }
+
+        .nav-tab {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 18px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+        .nav-tab.active { color: var(--primary); background: rgba(129,140,248,0.1); }
+
+        /* ===== MAIN ===== */
+        .main-container {
+            margin-top: 90px;
+            padding: 24px 40px 60px;
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ===== GLASS CARD ===== */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--card-border);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-primary { background: linear-gradient(135deg, hsl(255,85%,65%), hsl(280,85%,70%)); border: none; }
+        .btn-primary:hover { box-shadow: 0 0 20px var(--primary-glow); filter: brightness(1.1); }
+
+        .btn-success { background: var(--success); border: none; color: #000; }
+        .btn-success:hover { filter: brightness(1.15); box-shadow: 0 0 16px hsla(155,65%,50%,0.4); }
+
+        .btn-danger { background: var(--danger); border: none; }
+        .btn-danger:hover { filter: brightness(1.1); box-shadow: 0 0 16px hsla(0,75%,60%,0.4); }
+
+        .btn-warning { background: var(--warning); border: none; color: #000; }
+        .btn-warning:hover { filter: brightness(1.1); }
+
+        .btn-sm { padding: 5px 11px; font-size: 12px; }
+
+        /* ===== STATE BANNER ===== */
+        .state-banner {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .phase-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.03em;
+        }
+
+        .phase-badge.preparation {
+            background: hsla(35,85%,60%,0.15);
+            border: 1px solid hsla(35,85%,60%,0.4);
+            color: var(--warning);
+        }
+
+        .phase-badge.active {
+            background: hsla(155,65%,50%,0.15);
+            border: 1px solid hsla(155,65%,50%,0.4);
+            color: var(--success);
+        }
+
+        .phase-badge.completed {
+            background: hsla(255,85%,75%,0.1);
+            border: 1px solid hsla(255,85%,75%,0.3);
+            color: var(--primary);
+        }
+
+        .phase-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .phase-dot.pulsing {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        .banner-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+
+        /* ===== PREPARATION TABLE ===== */
+        .prep-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 6px;
+        }
+
+        .prep-table th {
+            text-align: left;
+            padding: 6px 10px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .prep-table td {
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.025);
+            vertical-align: middle;
+        }
+
+        .prep-table tr td:first-child { border-radius: 8px 0 0 8px; }
+        .prep-table tr td:last-child { border-radius: 0 8px 8px 0; }
+
+        .vs-label {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .seed-chip {
+            display: inline-block;
+            background: rgba(255,255,255,0.07);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        select.pairing-select {
+            background: #1a2235;
+            border: 1px solid var(--card-border);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 6px;
+            width: 100%;
+            max-width: 200px;
+            outline: none;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        select.pairing-select:focus { border-color: var(--primary); }
+
+        .prep-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+        }
+
+        /* ===== BRACKET ===== */
+        .bracket-wrapper {
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .bracket-tree {
+            display: flex;
+            gap: 0;
+            align-items: stretch;
+            min-width: 1100px;
+        }
+
+        .bracket-round {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 175px;
+        }
+
+        .bracket-round-header {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 0 8px 14px;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 14px;
+        }
+
+        .bracket-matches {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: space-around;
+            gap: 8px;
+            padding: 0 8px;
+            position: relative;
+        }
+
+        /* Connector lines between rounds */
+        .bracket-connector {
+            width: 28px;
+            min-width: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            position: relative;
+        }
+
+        .bracket-connector svg {
+            width: 100%;
+            flex: 1;
+        }
+
+        .match-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: default;
+        }
+
+        .match-box.active-match {
+            border-color: hsla(155,65%,50%,0.6);
+            box-shadow: 0 0 16px hsla(155,65%,50%,0.2);
+        }
+
+        .match-box.completed-match {
+            opacity: 0.6;
+        }
+
+        .match-box.pending-match {
+            opacity: 0.85;
+        }
+
+        .match-team {
+            display: flex;
+            align-items: center;
+            padding: 7px 10px;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            min-height: 34px;
+        }
+
+        .match-team:last-child { border-bottom: none; }
+
+        .match-team.winner {
+            background: rgba(255,255,255,0.06);
+            color: var(--success);
+        }
+
+        .match-team.loser {
+            color: var(--text-muted);
+        }
+
+        .match-team-seed {
+            font-size: 10px;
+            color: var(--text-muted);
+            min-width: 18px;
+            text-align: right;
+        }
+
+        .match-team-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .match-team-score {
+            font-variant-numeric: tabular-nums;
+            font-size: 12px;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: right;
+        }
+
+        .match-team-pts {
+            font-size: 10px;
+            color: var(--text-muted);
+            min-width: 30px;
+            text-align: right;
+        }
+
+        .match-empty-team {
+            padding: 7px 10px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            min-height: 34px;
+            display: flex;
+            align-items: center;
+        }
+
+        .match-empty-team:last-child { border-bottom: none; }
+
+        /* Third place + Final row */
+        .bracket-final-row {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .bracket-final-col {
+            flex: 1;
+            min-width: 175px;
+        }
+
+        .bracket-final-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* ===== GAME MANAGEMENT ===== */
+        .collapsed-section {
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 1px solid var(--card-border);
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .collapsible-header:hover { background: rgba(255,255,255,0.05); }
+
+        .collapsible-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .collapsible-chevron {
+            transition: transform 0.25s;
+            color: var(--text-muted);
+        }
+
+        .collapsible-chevron.open { transform: rotate(180deg); }
+
+        .collapsible-body {
+            display: none;
+            padding: 16px 20px;
+            border-top: 1px solid var(--card-border);
+            background: rgba(255,255,255,0.015);
+        }
+
+        .collapsible-body.open { display: block; }
+
+        /* Compact table */
+        .compact-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 4px;
+            font-size: 13px;
+        }
+
+        .compact-table th {
+            text-align: left;
+            padding: 5px 10px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .compact-table td {
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.025);
+        }
+
+        .compact-table tr td:first-child { border-radius: 6px 0 0 6px; }
+        .compact-table tr td:last-child { border-radius: 0 6px 6px 0; }
+
+        /* Active game card */
+        .active-game-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid hsla(155,65%,50%,0.3);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 0 30px hsla(155,65%,50%,0.1);
+        }
+
+        .active-game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .active-game-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--success);
+        }
+
+        .active-game-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .game-teams-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .game-team-block { text-align: center; }
+
+        .game-team-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .game-team-seed {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .game-vs { text-align: center; color: var(--text-muted); font-weight: 700; font-size: 18px; }
+
+        .score-inputs {
+            display: grid;
+            grid-template-columns: 1fr 40px 1fr;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .score-input-wrap { text-align: center; }
+
+        .score-input-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input.score-input {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid var(--card-border);
+            color: white;
+            padding: 10px 12px;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+        }
+
+        input.score-input:focus { border-color: var(--primary); }
+        input.score-input::-webkit-inner-spin-button { opacity: 0.3; }
+
+        .score-colon {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .game-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+        /* Duel context */
+        .duel-context {
+            background: rgba(255,255,255,0.025);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 10px;
+            align-items: start;
+            font-size: 12px;
+        }
+
+        .duel-col { }
+        .duel-col-right { text-align: right; }
+        .duel-col-mid { text-align: center; color: var(--text-muted); font-size: 11px; padding-top: 2px; }
+
+        .duel-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .duel-row:last-child { border-bottom: none; }
+
+        .duel-row-label { color: var(--text-muted); font-size: 11px; }
+        .duel-row-val { font-weight: 600; }
+
+        /* Upcoming game row */
+        .upcoming-game-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.025);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            gap: 12px;
+        }
+
+        .upcoming-game-row:last-child { margin-bottom: 0; }
+
+        .upcoming-round-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.07);
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .upcoming-teams {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .upcoming-teams .sep { color: var(--text-muted); margin: 0 5px; font-weight: 400; }
+
+        .upcoming-game-num {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ===== TOAST ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.2s ease;
+            pointer-events: all;
+            max-width: 340px;
+        }
+
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--danger); }
+        .toast.info { border-left: 3px solid var(--primary); }
+
+        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(20px); opacity: 0; } }
+
+        /* ===== DIALOG ===== */
+        .dialog-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dialog-overlay.open { display: flex; }
+
+        .dialog-box {
+            background: hsl(225,25%,9%);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .dialog-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .dialog-body {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+        /* ===== LOADING ===== */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .empty-state-icon { font-size: 32px; margin-bottom: 10px; opacity: 0.5; }
+
+        /* ===== BADGE COUNT ===== */
+        .count-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.1);
+            border-radius: 100px;
+            padding: 1px 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* ===== REFRESH INDICATOR ===== */
+        .refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .refresh-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            opacity: 0.5;
+        }
+
+        .refresh-dot.refreshing {
+            animation: pulse 0.7s infinite;
+            opacity: 1;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="glass-header">
+    <div class="logo-area">
+        <svg class="logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="FuzbAI logo">
+            <circle cx="18" cy="18" r="16" stroke="url(#lg1)" stroke-width="2"/>
+            <circle cx="18" cy="18" r="6" fill="url(#lg1)" opacity="0.9"/>
+            <line x1="18" y1="2" x2="18" y2="34" stroke="url(#lg1)" stroke-width="1.5" opacity="0.5"/>
+            <line x1="2" y1="18" x2="34" y2="18" stroke="url(#lg1)" stroke-width="1.5" opacity="0.5"/>
+            <defs>
+                <linearGradient id="lg1" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#818cf8"/>
+                    <stop offset="1" stop-color="#f472b6"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <span class="logo-text">FuzbAI Arena — Turnir</span>
+    </div>
+    <nav class="nav-links">
+        <a href="/qualifications" class="nav-tab">Kvalifikacije</a>
+        <a href="/tournament" class="nav-tab active">Turnir</a>
+        <a href="/viz-control" class="nav-tab">Vizualizacija</a>
+    </nav>
+    <div class="refresh-indicator">
+        <div class="refresh-dot" id="refreshDot"></div>
+        <span id="refreshLabel">Posodabljanje…</span>
+    </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main class="main-container">
+
+    <!-- ===== 1. TOURNAMENT STATE BANNER ===== -->
+    <div class="glass-card" id="stateBanner">
+        <div class="section-title">Stanje turnirja</div>
+        <div class="state-banner">
+            <div id="phaseBadge" class="phase-badge preparation">
+                <span class="phase-dot pulsing"></span>
+                <span id="phaseLabel">Nalaganje…</span>
+            </div>
+            <div id="confirmedNote" style="font-size:13px;color:var(--text-muted);display:none;">
+                ✓ Bracket potrjen
+            </div>
+            <div class="banner-actions" id="bannerActions"></div>
+        </div>
+    </div>
+
+    <!-- ===== 2. PREPARATION EDITOR ===== -->
+    <div class="glass-card" id="prepSection" style="display:none;">
+        <div class="section-title">Priprava parov — Osmina finala</div>
+        <div style="overflow-x:auto;">
+            <table class="prep-table" id="prepTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Ekipa 1</th>
+                        <th>Seed</th>
+                        <th></th>
+                        <th>Ekipa 2</th>
+                        <th>Seed</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="prepTableBody"></tbody>
+            </table>
+        </div>
+        <div class="prep-footer">
+            <button class="btn btn-primary" onclick="addPair()">+ Dodaj par</button>
+            <span id="prepStatus" style="font-size:12px;color:var(--text-muted);"></span>
+        </div>
+    </div>
+
+    <!-- ===== 3. BRACKET VISUALIZATION ===== -->
+    <div class="glass-card" id="bracketSection">
+        <div class="section-title">Bracket</div>
+        <div class="bracket-wrapper" id="bracketWrapper">
+            <div class="empty-state">
+                <div class="loading-spinner"></div>
+                <div style="margin-top:12px;">Nalagam bracket…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 4. GAME MANAGEMENT ===== -->
+    <div id="gameManagementSection" style="display:none;">
+        <div class="section-title" style="margin-bottom:16px;">Upravljanje iger</div>
+
+        <!-- Completed Games (collapsed) -->
+        <div class="collapsed-section">
+            <div class="collapsible-header" onclick="toggleCollapsible('completedBody','completedChevron')">
+                <span class="collapsible-title">
+                    Zaključene igre
+                    <span class="count-badge" id="completedCount">0</span>
+                </span>
+                <svg class="collapsible-chevron" id="completedChevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="collapsible-body" id="completedBody">
+                <div id="completedGamesContent"><div class="empty-state"><div class="empty-state-icon">📋</div>Ni zaključenih iger.</div></div>
+            </div>
+        </div>
+
+        <!-- Active Game -->
+        <div style="margin-bottom:16px;" id="activeGameSection">
+            <div id="activeGameContent">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎮</div>
+                    Ni aktivne igre.
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Games -->
+        <div class="collapsed-section">
+            <div class="collapsible-header" onclick="toggleCollapsible('upcomingBody','upcomingChevron')" style="cursor:default;" id="upcomingHeader">
+                <span class="collapsible-title">
+                    Prihajajoče igre
+                    <span class="count-badge" id="upcomingCount">0</span>
+                </span>
+                <svg class="collapsible-chevron open" id="upcomingChevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="collapsible-body open" id="upcomingBody">
+                <div id="upcomingGamesContent"><div class="empty-state"><div class="empty-state-icon">⏳</div>Ni prihaajočih iger.</div></div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ===== CONFIRMATION DIALOG ===== -->
+<div class="dialog-overlay" id="confirmDialog">
+    <div class="dialog-box">
+        <div class="dialog-title" id="confirmTitle">Potrdi dejanje</div>
+        <div class="dialog-body" id="confirmBody">Ali ste prepričani?</div>
+        <div class="dialog-actions">
+            <button class="btn" onclick="closeDialog()">Prekliči</button>
+            <button class="btn btn-danger" id="confirmOkBtn" onclick="confirmDialogOk()">Potrdi</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ===================================================================
+// STATE
+// ===================================================================
+let state = {
+    phase: null,
+    confirmed: false,
+    bracket: null,
+    games: { active: [], pending: [], completed: [] },
+    prepData: null,
+    standings: [],
+};
+
+let dialogCallback = null;
+let refreshTimer = null;
+let isRefreshing = false;
+
+// ===================================================================
+// ROUND NAME MAP
+// ===================================================================
+const ROUND_NAMES = {
+    round_of_16: 'Osmina finala',
+    quarter_final: 'Četrtfinale',
+    semi_final: 'Polfinale',
+    third_place: 'Tekma za 3. mesto',
+    final: 'Finale',
+};
+
+const ROUND_ORDER = ['round_of_16', 'quarter_final', 'semi_final'];
+
+// ===================================================================
+// TOAST
+// ===================================================================
+function showToast(msg, type = 'info', duration = 3500) {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+    el.innerHTML = `<span style="font-weight:700;color:${type==='success'?'var(--success)':type==='error'?'var(--danger)':'var(--primary)'}">${icon}</span><span>${msg}</span>`;
+    container.appendChild(el);
+    setTimeout(() => {
+        el.style.animation = 'slideOut 0.2s ease forwards';
+        setTimeout(() => el.remove(), 220);
+    }, duration);
+}
+
+// ===================================================================
+// DIALOG
+// ===================================================================
+function openDialog(title, body, okLabel, okClass, cb) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').textContent = body;
+    const okBtn = document.getElementById('confirmOkBtn');
+    okBtn.textContent = okLabel || 'Potrdi';
+    okBtn.className = `btn ${okClass || 'btn-danger'}`;
+    dialogCallback = cb;
+    document.getElementById('confirmDialog').classList.add('open');
+}
+
+function closeDialog() {
+    document.getElementById('confirmDialog').classList.remove('open');
+    dialogCallback = null;
+}
+
+function confirmDialogOk() {
+    closeDialog();
+    if (dialogCallback) dialogCallback();
+}
+
+// ===================================================================
+// API HELPERS
+// ===================================================================
+async function apiGet(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+    return r.json();
+}
+
+async function apiPost(url, body) {
+    const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' } };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    if (!r.ok) {
+        let msg = `HTTP ${r.status}`;
+        try { const d = await r.json(); msg = d.detail || d.message || msg; } catch {}
+        throw new Error(msg);
+    }
+    return r.json();
+}
+
+async function apiDelete(url) {
+    const r = await fetch(url, { method: 'DELETE' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+    return r.json();
+}
+
+// ===================================================================
+// REFRESH INDICATOR
+// ===================================================================
+function setRefreshing(v) {
+    const dot = document.getElementById('refreshDot');
+    const lbl = document.getElementById('refreshLabel');
+    if (v) {
+        dot.classList.add('refreshing');
+        lbl.textContent = 'Posodabljam…';
+    } else {
+        dot.classList.remove('refreshing');
+        const now = new Date();
+        lbl.textContent = `Posodobljeno ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+    }
+}
+
+// ===================================================================
+// COLLAPSIBLE
+// ===================================================================
+function toggleCollapsible(bodyId, chevronId) {
+    const body = document.getElementById(bodyId);
+    const chevron = document.getElementById(chevronId);
+    body.classList.toggle('open');
+    chevron.classList.toggle('open');
+}
+
+// ===================================================================
+// LOAD DATA
+// ===================================================================
+async function loadAll() {
+    setRefreshing(true);
+    try {
+        // Always load state + bracket + games in parallel
+        const [stateData, bracketData, gamesData] = await Promise.all([
+            apiGet('/api/tournament/state').catch(() => null),
+            apiGet('/api/tournament/bracket').catch(() => null),
+            apiGet('/api/tournament/games').catch(() => null),
+        ]);
+
+        if (stateData) {
+            state.phase = stateData.phase;
+            state.confirmed = stateData.confirmed;
+        }
+        if (bracketData) {
+            state.bracket = bracketData.bracket;
+            if (bracketData.state) { state.phase = bracketData.state.phase; state.confirmed = bracketData.state.confirmed; }
+        }
+        if (gamesData) {
+            state.games = { 
+                active: gamesData.active || [], 
+                pending: gamesData.pending || [], 
+                completed: gamesData.completed || [] 
+            };
+        }
+
+        // Load preparation data if in preparation phase
+        if (state.phase === 'preparation') {
+            const prepData = await apiGet('/api/tournament/preparation').catch(() => null);
+            if (prepData) {
+                state.prepData = prepData;
+                state.standings = prepData.standings || [];
+            }
+        }
+
+        renderAll();
+    } catch (e) {
+        showToast('Napaka pri nalaganju podatkov: ' + e.message, 'error');
+    }
+    setRefreshing(false);
+}
+
+// ===================================================================
+// RENDER ALL
+// ===================================================================
+function renderAll() {
+    renderStateBanner();
+    renderPrepSection();
+    renderBracket();
+    renderGameManagement();
+}
+
+// ===================================================================
+// 1. STATE BANNER
+// ===================================================================
+function renderStateBanner() {
+    const badge = document.getElementById('phaseBadge');
+    const label = document.getElementById('phaseLabel');
+    const actions = document.getElementById('bannerActions');
+    const confirmedNote = document.getElementById('confirmedNote');
+
+    const phaseMap = {
+        preparation: { cls: 'preparation', name: 'Priprava', pulse: true },
+        active: { cls: 'active', name: 'Aktiven turnir', pulse: true },
+        completed: { cls: 'completed', name: 'Zaključen', pulse: false },
+    };
+
+    const p = state.phase ? (phaseMap[state.phase] || { cls: 'preparation', name: state.phase, pulse: false }) : { cls: 'preparation', name: '—', pulse: false };
+    badge.className = `phase-badge ${p.cls}`;
+    label.textContent = p.name;
+    const dot = badge.querySelector('.phase-dot');
+    if (dot) { dot.className = `phase-dot${p.pulse ? ' pulsing' : ''}`; }
+
+    confirmedNote.style.display = state.confirmed ? '' : 'none';
+
+    // Actions
+    let html = '';
+    if (state.phase === 'preparation') {
+        html += `<button class="btn btn-primary" onclick="generatePairs()">⚡ Generiraj pare</button>`;
+        if (!state.confirmed) {
+            html += `<button class="btn btn-success" onclick="confirmTournament()">✓ Potrdi turnir</button>`;
+        }
+    }
+    html += `<button class="btn btn-danger" onclick="resetTournament()">↺ Ponastavi</button>`;
+    actions.innerHTML = html;
+}
+
+// ===================================================================
+// ACTIONS
+// ===================================================================
+async function generatePairs() {
+    try {
+        await apiPost('/api/tournament/generate-pairs');
+        showToast('Pari uspešno generirani!', 'success');
+        await loadAll();
+    } catch(e) {
+        showToast('Napaka: ' + e.message, 'error');
+    }
+}
+
+async function confirmTournament() {
+    openDialog('Potrdi turnir', 'Ko potrdite bracket, se začne turnir. Tega dejanja ni mogoče razveljaviti. Ali ste prepričani?', 'Potrdi turnir', 'btn-success', async () => {
+        try {
+            await apiPost('/api/tournament/confirm');
+            showToast('Turnir potrjen! Začenjamo…', 'success');
+            await loadAll();
+        } catch(e) {
+            showToast('Napaka: ' + e.message, 'error');
+        }
+    });
+}
+
+async function resetTournament() {
+    openDialog('Ponastavi turnir', 'S to akcijo se izbrišejo VSI podatki turnirja. Tega dejanja ni mogoče razveljaviti. Ali ste res prepričani?', 'Ponastavi', 'btn-danger', async () => {
+        try {
+            await apiPost('/api/tournament/reset');
+            showToast('Turnir je bil ponastavljen.', 'info');
+            await loadAll();
+        } catch(e) {
+            showToast('Napaka: ' + e.message, 'error');
+        }
+    });
+}
+
+// ===================================================================
+// 2. PREPARATION EDITOR
+// ===================================================================
+function renderPrepSection() {
+    const section = document.getElementById('prepSection');
+    if (state.phase !== 'preparation' || state.confirmed) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = '';
+
+    const pairs = (state.prepData && state.prepData.pairs) ? state.prepData.pairs : [];
+    const standings = state.standings || [];
+    const tbody = document.getElementById('prepTableBody');
+
+    tbody.innerHTML = pairs.map((pair, idx) => {
+        const t1Options = buildTeamOptions(standings, pair.team1_id);
+        const t2Options = buildTeamOptions(standings, pair.team2_id);
+        const seed1 = pair.team1_seed !== undefined ? pair.team1_seed : getSeed(standings, pair.team1_id);
+        const seed2 = pair.team2_seed !== undefined ? pair.team2_seed : getSeed(standings, pair.team2_id);
+
+        return `<tr id="prepRow_${pair.id}">
+            <td style="color:var(--text-muted);font-size:12px;font-weight:600;">${idx + 1}</td>
+            <td>
+                <select class="pairing-select" onchange="updatePair(${pair.id},'team1',this.value)">
+                    ${t1Options}
+                </select>
+            </td>
+            <td><span class="seed-chip">${seed1 !== undefined ? seed1 : '?'}</span></td>
+            <td class="vs-label">vs</td>
+            <td>
+                <select class="pairing-select" onchange="updatePair(${pair.id},'team2',this.value)">
+                    ${t2Options}
+                </select>
+            </td>
+            <td><span class="seed-chip">${seed2 !== undefined ? seed2 : '?'}</span></td>
+            <td>
+                <button class="btn btn-sm btn-danger" onclick="removePair(${pair.id})" title="Odstrani par">✕</button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('prepStatus').textContent = `${pairs.length} / 8 parov`;
+}
+
+function buildTeamOptions(standings, selectedId) {
+    let html = '<option value="">— Izberi ekipo —</option>';
+    standings.forEach(t => {
+        const sel = (t.id === selectedId || t.id === parseInt(selectedId)) ? 'selected' : '';
+        html += `<option value="${t.id}" ${sel}>${t.name} (#${t.rank})</option>`;
+    });
+    return html;
+}
+
+function getSeed(standings, teamId) {
+    if (!teamId) return undefined;
+    const t = standings.find(s => s.id === teamId || s.id === parseInt(teamId));
+    return t ? t.rank : undefined;
+}
+
+async function updatePair(pairId, field, value) {
+    if (!value) return;
+    try {
+        const body = { pair_id: pairId };
+        if (field === 'team1') body.team1_id = parseInt(value);
+        if (field === 'team2') body.team2_id = parseInt(value);
+        await apiPost('/api/tournament/preparation/update-pair', body);
+        document.getElementById('prepStatus').textContent = 'Shranjeno ✓';
+        // Refresh prep data to update seeds
+        const prepData = await apiGet('/api/tournament/preparation').catch(() => null);
+        if (prepData) { state.prepData = prepData; state.standings = prepData.standings || []; }
+        renderPrepSection();
+    } catch(e) {
+        showToast('Napaka pri posodabljanju para: ' + e.message, 'error');
+    }
+}
+
+async function removePair(pairId) {
+    try {
+        await apiDelete(`/api/tournament/preparation/remove-pair/${pairId}`);
+        showToast('Par odstranjen.', 'info');
+        const prepData = await apiGet('/api/tournament/preparation').catch(() => null);
+        if (prepData) { state.prepData = prepData; state.standings = prepData.standings || []; }
+        renderPrepSection();
+    } catch(e) {
+        showToast('Napaka: ' + e.message, 'error');
+    }
+}
+
+async function addPair() {
+    // Need to pick two teams — open a dialog or just add empty
+    const standings = state.standings;
+    if (!standings.length) { showToast('Ni ekip za dodajanje.', 'error'); return; }
+
+    // Find two teams not already in pairs
+    const pairs = (state.prepData && state.prepData.pairs) ? state.prepData.pairs : [];
+    const usedIds = new Set();
+    pairs.forEach(p => { if (p.team1_id) usedIds.add(p.team1_id); if (p.team2_id) usedIds.add(p.team2_id); });
+    const available = standings.filter(t => !usedIds.has(t.id));
+
+    if (available.length < 2) {
+        showToast('Ni dovolj razpoložljivih ekip za nov par.', 'error');
+        return;
+    }
+
+    const t1 = available[0].id;
+    const t2 = available[1].id;
+
+    try {
+        await fetch(`/api/tournament/preparation/add-pair?team1_id=${t1}&team2_id=${t2}`, { method: 'POST' });
+        showToast('Par dodan.', 'success');
+        const prepData = await apiGet('/api/tournament/preparation').catch(() => null);
+        if (prepData) { state.prepData = prepData; state.standings = prepData.standings || []; }
+        renderPrepSection();
+    } catch(e) {
+        showToast('Napaka: ' + e.message, 'error');
+    }
+}
+
+// ===================================================================
+// 3. BRACKET VISUALIZATION
+// ===================================================================
+function renderBracket() {
+    const wrapper = document.getElementById('bracketWrapper');
+    const bracket = state.bracket;
+
+    if (!bracket) {
+        wrapper.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏆</div>Bracket še ni ustvarjen.</div>`;
+        return;
+    }
+
+    // Build the main rounds tree (R16, QF, SF)
+    const mainRounds = ROUND_ORDER.filter(r => bracket[r] && bracket[r].pairs && bracket[r].pairs.length > 0);
+
+    if (mainRounds.length === 0) {
+        wrapper.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏆</div>Bracket je prazen.</div>`;
+        return;
+    }
+
+    let html = `<div class="bracket-tree">`;
+
+    mainRounds.forEach((round, ri) => {
+        const roundData = bracket[round];
+        const pairs = roundData.pairs || [];
+
+        html += `<div class="bracket-round">`;
+        html += `<div class="bracket-round-header">${ROUND_NAMES[round] || round}</div>`;
+        html += `<div class="bracket-matches">`;
+        pairs.forEach(pair => {
+            html += renderMatchBox(pair);
+        });
+        html += `</div></div>`;
+
+        // Connector between rounds
+        if (ri < mainRounds.length - 1) {
+            html += buildConnector(pairs.length);
+        }
+    });
+
+    html += `</div>`; // end bracket-tree
+
+    // Third place + Final row
+    const hasThird = bracket.third_place && bracket.third_place.pairs && bracket.third_place.pairs.length;
+    const hasFinal = bracket.final && bracket.final.pairs && bracket.final.pairs.length;
+
+    if (hasThird || hasFinal) {
+        html += `<div class="bracket-final-row" style="margin-top:24px;">`;
+        if (hasThird) {
+            html += `<div class="bracket-final-col">
+                <div class="bracket-final-label">${ROUND_NAMES.third_place}</div>
+                ${bracket.third_place.pairs.map(p => renderMatchBox(p)).join('')}
+            </div>`;
+        }
+        if (hasFinal) {
+            html += `<div class="bracket-final-col">
+                <div class="bracket-final-label" style="color:var(--warning);">🏆 ${ROUND_NAMES.final}</div>
+                ${bracket.final.pairs.map(p => renderMatchBox(p, true)).join('')}
+            </div>`;
+        }
+        html += `</div>`;
+    }
+
+    wrapper.innerHTML = html;
+}
+
+function buildConnector(pairCount) {
+    // Simple CSS-only connector spacer
+    return `<div style="width:24px;min-width:24px;display:flex;flex-direction:column;justify-content:space-around;padding-top:34px;">
+        ${Array(pairCount).fill('<div style="flex:1;border-right:1px solid rgba(255,255,255,0.08);margin:4px 0;"></div>').join('')}
+    </div>`;
+}
+
+function renderMatchBox(pair, isFinal = false) {
+    const activeGameIds = state.games.active.map(g => g.pair_id);
+    const isActive = activeGameIds.includes(pair.id);
+    const isCompleted = !!pair.winner_id;
+    const isPending = !isActive && !isCompleted;
+
+    let cls = 'match-box';
+    if (isActive) cls += ' active-match';
+    else if (isCompleted) cls += ' completed-match';
+    else cls += ' pending-match';
+
+    if (isFinal) cls += ' final-match';
+
+    // Get duel scores
+    const ds = pair.duel_score || {};
+    const t1pts = ds.team1_total_points !== undefined ? ds.team1_total_points : null;
+    const t2pts = ds.team2_total_points !== undefined ? ds.team2_total_points : null;
+
+    // Game scores
+    const games = pair.games || [];
+    const g1 = games.find(g => g.game_number === 1);
+    const g2 = games.find(g => g.game_number === 2);
+
+    let scoreStr = '';
+    if (g1 || g2) {
+        const s1 = g1 ? `${g1.team1_score ?? '?'}:${g1.team2_score ?? '?'}` : '—';
+        const s2 = g2 ? `${g2.team1_score ?? '?'}:${g2.team2_score ?? '?'}` : '—';
+        scoreStr = `<div style="padding:4px 10px;font-size:10px;color:var(--text-muted);border-top:1px solid rgba(255,255,255,0.04);display:flex;gap:10px;">
+            <span>I: ${s1}</span><span>II: ${s2}</span>
+        </div>`;
+    }
+
+    function teamRow(name, seed, pts, winnerId, teamId, isEmpty) {
+        if (isEmpty) {
+            return `<div class="match-empty-team">TBD</div>`;
+        }
+        const isWinner = !!winnerId && winnerId === teamId;
+        const isLoser = !!winnerId && winnerId !== teamId;
+        let cls = 'match-team';
+        if (isWinner) cls += ' winner';
+        else if (isLoser) cls += ' loser';
+        const ptsStr = pts !== null ? `<span class="match-team-pts">${formatPts(pts)}</span>` : '';
+        return `<div class="${cls}">
+            <span class="match-team-seed">#${seed || '?'}</span>
+            <span class="match-team-name">${escHtml(name || 'TBD')}</span>
+            ${ptsStr}
+        </div>`;
+    }
+
+    const hasTeam1 = !!pair.team1_id;
+    const hasTeam2 = !!pair.team2_id;
+
+    return `<div class="${cls}">
+        ${teamRow(pair.team1_name, pair.team1_seed, t1pts, pair.winner_id, pair.team1_id, !hasTeam1)}
+        ${teamRow(pair.team2_name, pair.team2_seed, t2pts, pair.winner_id, pair.team2_id, !hasTeam2)}
+        ${scoreStr}
+    </div>`;
+}
+
+function formatPts(v) {
+    if (v === null || v === undefined) return '';
+    return Number.isInteger(v) ? v : v.toFixed(1);
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===================================================================
+// 4. GAME MANAGEMENT
+// ===================================================================
+function renderGameManagement() {
+    const section = document.getElementById('gameManagementSection');
+
+    if (state.phase !== 'active') {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = '';
+
+    renderCompletedGames();
+    renderActiveGame();
+    renderUpcomingGames();
+}
+
+function renderCompletedGames() {
+    const completed = state.games.completed || [];
+    document.getElementById('completedCount').textContent = completed.length;
+    const el = document.getElementById('completedGamesContent');
+
+    if (!completed.length) {
+        el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div>Ni zaključenih iger.</div>`;
+        return;
+    }
+
+    let rows = completed.map(g => {
+        const roundName = ROUND_NAMES[g.round] || g.round || '—';
+        return `<tr>
+            <td>${escHtml(roundName)}</td>
+            <td>${g.match_index !== undefined ? g.match_index + 1 : '—'}</td>
+            <td>${g.game_number || '—'}</td>
+            <td style="font-weight:600;">${escHtml(g.team1_name || '—')}</td>
+            <td style="text-align:center;font-weight:700;color:var(--success);">${g.team1_score ?? '?'}</td>
+            <td style="text-align:center;color:var(--text-muted);">:</td>
+            <td style="text-align:center;font-weight:700;color:var(--success);">${g.team2_score ?? '?'}</td>
+            <td style="font-weight:600;">${escHtml(g.team2_name || '—')}</td>
+        </tr>`;
+    }).join('');
+
+    el.innerHTML = `<table class="compact-table">
+        <thead><tr>
+            <th>Krog</th><th>Par</th><th>Igra</th><th>Ekipa 1</th><th colspan="3">Rezultat</th><th>Ekipa 2</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderActiveGame() {
+    const el = document.getElementById('activeGameContent');
+    const active = state.games.active || [];
+
+    if (!active.length) {
+        el.innerHTML = `<div class="empty-state" style="padding:32px;background:rgba(255,255,255,0.02);border-radius:14px;border:1px dashed var(--card-border);">
+            <div class="empty-state-icon">🎮</div>
+            Ni aktivne igre.
+        </div>`;
+        return;
+    }
+
+    const game = active[0];
+    const roundName = ROUND_NAMES[game.round] || game.round || '—';
+    const matchLabel = `${roundName} — Par ${(game.match_index ?? 0) + 1} — Igra ${game.game_number || '?'}`;
+
+    // Find pair info from bracket for duel context
+    const duelCtx = buildDuelContext(game);
+
+    el.innerHTML = `<div class="active-game-card">
+        <div class="active-game-header">
+            <span class="active-game-label">▶ AKTIVNA IGRA</span>
+            <span class="active-game-meta">${escHtml(matchLabel)}</span>
+        </div>
+        <div class="game-teams-row">
+            <div class="game-team-block">
+                <div class="game-team-name">${escHtml(game.team1_name || '—')}</div>
+                <div class="game-team-seed">Seed #${game.team1_seed || '?'}</div>
+            </div>
+            <div class="game-vs">vs</div>
+            <div class="game-team-block">
+                <div class="game-team-name">${escHtml(game.team2_name || '—')}</div>
+                <div class="game-team-seed">Seed #${game.team2_seed || '?'}</div>
+            </div>
+        </div>
+        ${duelCtx}
+        <div class="score-inputs">
+            <div class="score-input-wrap">
+                <div class="score-input-label">${escHtml(game.team1_name || 'Ekipa 1')}</div>
+                <input type="number" min="0" class="score-input" id="scoreT1_${game.id}" value="${game.team1_score ?? ''}" placeholder="0">
+            </div>
+            <div class="score-colon">:</div>
+            <div class="score-input-wrap">
+                <div class="score-input-label">${escHtml(game.team2_name || 'Ekipa 2')}</div>
+                <input type="number" min="0" class="score-input" id="scoreT2_${game.id}" value="${game.team2_score ?? ''}" placeholder="0">
+            </div>
+        </div>
+        <div class="game-actions">
+            <button class="btn btn-primary" onclick="saveResult(${game.id})">💾 Shrani rezultat</button>
+            <button class="btn btn-success" onclick="confirmResult(${game.id})">✓ Potrdi rezultat</button>
+        </div>
+    </div>`;
+}
+
+function buildDuelContext(game) {
+    // Try to find the bracket pair for this game
+    let pairData = null;
+    if (state.bracket) {
+        for (const round of Object.values(state.bracket)) {
+            if (!round || !round.pairs) continue;
+            const p = round.pairs.find(p => p.id === game.pair_id);
+            if (p) { pairData = p; break; }
+        }
+    }
+
+    if (!pairData || !pairData.duel_score) return '';
+
+    const ds = pairData.duel_score;
+    const games = pairData.games || [];
+    const g1 = games.find(g => g.game_number === 1);
+    const g2 = games.find(g => g.game_number === 2);
+
+    const t1Name = escHtml(pairData.team1_name || '—');
+    const t2Name = escHtml(pairData.team2_name || '—');
+
+    return `<div class="duel-context">
+        <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">${t1Name}</div>
+            <div class="duel-row"><span class="duel-row-label">Turnirski goli</span><span class="duel-row-val">${ds.team1_tournament_goals ?? 0}</span></div>
+            <div class="duel-row"><span class="duel-row-label">Kvali. goli (×0.5)</span><span class="duel-row-val">${ds.team1_qual_goals ?? 0}</span></div>
+            <div class="duel-row"><span class="duel-row-label">Skupaj točk</span><span class="duel-row-val" style="color:var(--primary);">${formatPts(ds.team1_total_points)}</span></div>
+        </div>
+        <div class="duel-col-mid">
+            <div style="margin-bottom:6px;font-weight:700;">Dvoboj</div>
+            ${g1 ? `<div>I: ${g1.team1_score ?? '?'}:${g1.team2_score ?? '?'}</div>` : ''}
+            ${g2 ? `<div>II: ${g2.team1_score ?? '?'}:${g2.team2_score ?? '?'}</div>` : ''}
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">${t2Name}</div>
+            <div class="duel-row" style="justify-content:flex-end;gap:8px;"><span class="duel-row-val">${ds.team2_tournament_goals ?? 0}</span><span class="duel-row-label">Turnirski goli</span></div>
+            <div class="duel-row" style="justify-content:flex-end;gap:8px;"><span class="duel-row-val">${ds.team2_qual_goals ?? 0}</span><span class="duel-row-label">Kvali. goli (×0.5)</span></div>
+            <div class="duel-row" style="justify-content:flex-end;gap:8px;"><span class="duel-row-val" style="color:var(--primary);">${formatPts(ds.team2_total_points)}</span><span class="duel-row-label">Skupaj točk</span></div>
+        </div>
+    </div>`;
+}
+
+function renderUpcomingGames() {
+    const pending = state.games.pending || [];
+    document.getElementById('upcomingCount').textContent = pending.length;
+    const el = document.getElementById('upcomingGamesContent');
+
+    if (!pending.length) {
+        el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⏳</div>Ni prihaajočih iger.</div>`;
+        return;
+    }
+
+    el.innerHTML = pending.map(g => {
+        const roundName = ROUND_NAMES[g.round] || g.round || '—';
+        return `<div class="upcoming-game-row">
+            <span class="upcoming-round-badge">${escHtml(roundName)}</span>
+            <span class="upcoming-game-num">Igra ${g.game_number || '?'}</span>
+            <span class="upcoming-teams">${escHtml(g.team1_name || '?')}<span class="sep">vs</span>${escHtml(g.team2_name || '?')}</span>
+            <button class="btn btn-sm btn-primary" onclick="setActive(${g.id})">▶ Aktiviraj</button>
+        </div>`;
+    }).join('');
+}
+
+// ===================================================================
+// GAME ACTIONS
+// ===================================================================
+async function saveResult(gameId) {
+    const t1 = document.getElementById(`scoreT1_${gameId}`)?.value;
+    const t2 = document.getElementById(`scoreT2_${gameId}`)?.value;
+    if (t1 === '' || t2 === '') { showToast('Vnesite oba rezultata.', 'error'); return; }
+    try {
+        await apiPost(`/api/tournament/game/${gameId}/result`, {
+            team1_score: parseInt(t1),
+            team2_score: parseInt(t2),
+        });
+        showToast('Rezultat shranjen.', 'success');
+        await loadAll();
+    } catch(e) {
+        showToast('Napaka: ' + e.message, 'error');
+    }
+}
+
+async function confirmResult(gameId) {
+    const t1 = document.getElementById(`scoreT1_${gameId}`)?.value;
+    const t2 = document.getElementById(`scoreT2_${gameId}`)?.value;
+    openDialog('Potrdi rezultat', `Rezultat ${t1 ?? '?'}:${t2 ?? '?'} bo potrjen in igra bo zaključena. Ali ste prepričani?`, 'Potrdi rezultat', 'btn-success', async () => {
+        try {
+            // Save first if values have changed
+            if (t1 !== '' && t2 !== '') {
+                await apiPost(`/api/tournament/game/${gameId}/result`, {
+                    team1_score: parseInt(t1),
+                    team2_score: parseInt(t2),
+                });
+            }
+            await apiPost(`/api/tournament/game/${gameId}/confirm`);
+            showToast('Rezultat potrjen!', 'success');
+            await loadAll();
+        } catch(e) {
+            showToast('Napaka: ' + e.message, 'error');
+        }
+    });
+}
+
+async function setActive(gameId) {
+    try {
+        await apiPost(`/api/tournament/game/${gameId}/set-active`);
+        showToast('Igra aktivirana.', 'info');
+        await loadAll();
+    } catch(e) {
+        showToast('Napaka: ' + e.message, 'error');
+    }
+}
+
+// ===================================================================
+// AUTO-REFRESH
+// ===================================================================
+function startRefresh() {
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(loadAll, 3000);
+}
+
+// ===================================================================
+// INIT
+// ===================================================================
+loadAll().then(() => startRefresh());
+</script>
+</body>
+</html>

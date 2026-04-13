@@ -1,0 +1,1023 @@
+﻿@page
+@model KiberzBallTableAPI.Pages.RenderModel
+@{
+}
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Kiberzball render</title>
+    <style>
+        body {
+            background-color: black;
+            margin: 0px;
+            font-family: 'Helvetica';
+            overflow: hidden;
+        }
+
+        #resultsBackground {
+            background-color: rgba(0,0,0,0.5);
+            z-index: 11;
+
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 83%;
+            height: 100%;
+        }
+
+        #msgOverlay {
+            color: white;
+            display: none;
+            position: absolute;
+            top: 0px;
+            left: 10%;
+            width: 70%;
+            height: 15%;
+            text-align: center;
+            font-size: 8vh;
+            font-weight: 800;
+            z-index: 15;
+        }
+
+        #resultsOverlay {
+            position: absolute;
+            top: 25%;
+            left: 10%;
+            width: 65%;
+            height: 68%;
+            z-index: 7;
+            background-image: linear-gradient(to bottom right, rgba(0,0,0,0.8), rgba(64,64,64,0.8));
+            padding: 20px;
+            border-radius: 30px;
+            border: 5px solid rgba(255, 255, 255, 0.8);
+            border-style: groove;
+
+
+            /*background: linear-gradient(0.06deg, rgba(250, 250, 250, 1) 0%, rgba(246, 246, 246, 1) 29.62%, rgba(234, 234, 234, 1) 58.47%, rgba(215, 215, 215, 1) 86.92%, rgba(204, 204, 204, 1) 99.22%); */
+            box-shadow: -4px 8px 8px rgba(0,0,0,0.1), -8px 16px 16px rgba(0,0,0,0.1), -16px 32px 32px rgba(0,0,0,0.15), -32px 64px 64px rgba(0,0,0,0.25);
+        }
+
+        #results_table_div {
+            position: absolute;
+            top: 50px;
+            left: 5%;
+            width: 90%;
+            height: 100%;
+        }
+
+        #resultsTable {
+            width: 100%;
+            color: white;
+            font-family: 'Helvetica';
+            font-size: 40px;
+        }
+
+
+
+        #results_title {
+            background: black;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            left: 50%;
+            top: 0%;
+            height: 50px;
+            width: 50%;
+            z-index: 14;
+            border: 5px solid rgba(255, 255, 255, 0.8);
+            color: white;
+            text-align: center;
+            font-size: 48px;
+            font-weight: 200;
+            border-radius: 30px;
+        }
+
+
+        th:nth-of-type(4n+1), th:nth-of-type(4n+2), td:nth-of-type(4n+1), td:nth-of-type(4n+2) {
+            text-align: left;
+        }
+        
+        td {
+            text-align: center;
+        }
+         
+        thead {            
+            color: white;            
+            letter-spacing: 2%;
+        }       
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0 10px;            
+        }
+
+        tbody {
+            /*
+            
+            background-attachment: fixed;
+                */
+        }
+
+        thead th:first-of-type {
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }
+
+        thead th:last-of-type {
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        tbody tr:nth-child(even) {
+            
+        }
+
+
+        tbody tr:nth-child(odd) {
+            /*background: -webkit-linear-gradient(left, transparent 25%, blue 40%, red 60%, transparent 75%);*/
+            background: -webkit-linear-gradient(left, rgba(0, 21, 144, 0.3) 25%, rgba(0, 21, 144, 1.00) 50%, rgba(0, 21, 144, 0.3) 70%);
+            background-attachment: fixed;
+
+        }
+
+        tbody tr {
+            position: relative;
+        }
+
+        tbody tr:after {
+            content: "";
+            position: absolute;
+            top: -8px;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: -webkit-linear-gradient(left, transparent 0%, grey 50%, transparent 100%);
+            z-index: -1;
+        }
+
+        /* Row with the last result */
+        #lastresult {
+            background: -webkit-linear-gradient(left, #4dd03480 0%, #4dd034 5%, #4dd03430 80%);
+        }
+
+        #scorediff {
+            display: inline;
+            font-size: 27px;
+            margin-left: 20px;            
+        }
+
+        #gamesplayed {
+            display: inline;
+            font-size: 25px;
+            margin-left: 20px;
+            color: #888;
+        }
+
+        .scorecanvas {
+            width: 300px;
+            height: 40px;
+        }
+
+    </style>
+    <script src="jquery-3.6.0.min.js" type="text/javascript"></script>
+    <script src="jquery-ui-1.13.0/jquery-ui.js"></script>
+    <link rel="stylesheet" href="jquery-ui-1.13.0/jquery-ui.css">
+    <script>
+        var calib_data = new Array(2);
+        var camera_state = {};
+        var field_geometry = {};
+        var marker_server_data0 = {};
+        var marker_server_data1 = {};
+        var msgField = null;
+        var msgFieldCompetition = null;
+
+        var replayMode = 0;
+        var currentLevel = 0;
+        var resultsDisplayed = false;
+
+        $(function () {
+            // Load static data
+            $.getJSON('geometry.json', function (data) {
+                field_geometry = data;
+            })
+            $.getJSON('Camera/CalibrationData/0?' + new Date().getTime(), function (data) {
+                calib_data[0] = data;
+            });
+            $.getJSON('Camera/CalibrationData/1?' + new Date().getTime(), function (data) {
+                calib_data[1] = data;
+            });
+
+            $("#myoverlay").on('mousemove', function (e) { handleMouseMove(e); });
+            //$("#myoverlay").mousemove(function (e) { handleMouseMove(e); });
+
+            $('#load-replay').on('click', function () {
+                let file = $("#cmb-file").val();
+                $.get('Camera/ReplayLogLoad?file=' + file + '&t=' + new Date().getTime(), function (data) {
+                    replayMode = 1;
+                    $('#do-replay')[0].innerHTML = "Exit";
+                    $('#replay-location')[0].style.display = "block";
+                    $('#replayOverlay')[0].style.display = "block";
+                    $('#timestamp')[0].style.display = "block";
+                });
+            });
+
+            $('#save-replay').on('click', function () {
+                $.get('/Camera/SaveReplay?name=user_click', function (data) {
+                    replayMode = 1;
+                    $('#do-replay')[0].innerHTML = "Exit";
+                    $('#replay-location')[0].style.display = "block";
+                    $('#replayOverlay')[0].style.display = "block";
+                    $('#timestamp')[0].style.display = "block";
+                });
+            });
+
+            $('#do-replay').on('click', function () {
+                if ($('#do-replay')[0].innerHTML == "Replay") {
+                    $.get('/Camera/StartReplay', function (data) { replayMode = 1; });
+                    $('#do-replay')[0].innerHTML = "Exit";
+                    $('#replay-location')[0].style.display = "block";
+                    $('#replayOverlay')[0].style.display = "block";
+                    $('#timestamp')[0].style.display = "block";
+                } else {
+                    $('#do-replay')[0].innerHTML = "Replay";
+                    $('#replay-location')[0].style.display = "none";
+                    $('#replayOverlay')[0].style.display = "none";
+                    $('#timestamp')[0].style.display = "none";
+                    
+                    replayMode = 0;
+                }                
+            });
+
+            // Request list of log files and populate the drop-down
+            $.getJSON('Camera/ReplayLogsList? ' + new Date().getTime(), function (data) {
+                let cmb = $('#cmb-file')[0];
+                data.logs.forEach((file) => {
+                    console.log(file)
+
+                    var opt = document.createElement("option"); // Create the new element
+                    opt.value = file; // set the value
+                    opt.text = file; // set the text
+
+                    cmb.appendChild(opt); // add it to the select
+                });
+            });
+
+            setInterval(refresh, 20);
+        });
+
+        function handleMouseMove(e) {
+            console.log("Mouse move " + e);
+            if (e.clientY < 50) {
+                // Show the options
+                $('#camera_options')[0].style.display = "block";
+                $('#replay_options')[0].style.display = "block";
+            } else {
+                // Hide the options
+                $('#camera_options')[0].style.display = "none";
+                $('#replay_options')[0].style.display = "none";
+            }
+        }
+
+        function draw_players(ctx, data, calib, reverse_x, start_index, end_index) {
+            var c = $('#myoverlay')[0];
+            for (let i = start_index; i <= end_index; i++) {
+                //if (calib.rods[i].code_scale_factor == 0) continue;
+
+                let rg = field_geometry.rods[i];
+                let pos = rg.travel * data.rod_position_calib[i]; //(data.rod_position[i] - calib.rods[i].min_position) / (calib.rods[i].max_position - calib.rods[i].min_position);
+
+                for (let p = 0; p < rg.players; p++) {
+                    // Draw the player position
+                    let p_pos = rg.first_offset + pos + p * rg.spacing;
+
+                    /*
+                    ctx.beginPath();
+                    ctx.fillStyle = rg.team;                    
+                    ctx.arc(reverse_x ? c.width - rg.position : rg.position, reverse_x ? c.height - p_pos : p_pos, 20, 0, 2 * Math.PI);
+                    ctx.fill();
+                    */
+
+                    let xpos = reverse_x ? c.width - rg.position : rg.position;
+                    let ypos = reverse_x ? c.height - p_pos : p_pos;
+                    let ph_pos = Math.sin(data.rod_angle[i] / 32.0 * Math.PI) * 20; // Head position
+                    let pf_pos = Math.sin(-data.rod_angle[i] / 32.0 * Math.PI) * 70;
+
+                    if (reverse_x) {
+                        pf_pos *= -1;
+                    }
+
+                    if (Math.cos(-data.rod_angle[i] / 32.0 * Math.PI) > 0) {
+                        // Draw the feet
+                        ctx.beginPath();
+                        ctx.fillStyle = rg.team;
+
+                        ctx.moveTo(xpos, ypos - 15);
+                        ctx.lineTo(xpos + pf_pos, ypos - 8);
+                        ctx.lineTo(xpos + pf_pos, ypos + 8);
+                        ctx.lineTo(xpos, ypos + 15);
+                        ctx.lineTo(xpos, ypos - 15);
+                        ctx.fill();
+
+                        ctx.beginPath();
+                        ctx.fillStyle = rg.team;
+                        ctx.rect(xpos - 10, ypos - 20, 20, 40);
+                        ctx.fill();
+
+                        // Draw the player head
+                        ctx.beginPath();
+                        ctx.fillStyle = rg.team == "red" ? "rgba(200,0,0)" : "rgba(0,0,200)";
+                        ctx.arc(reverse_x ? c.width - rg.position - ph_pos : rg.position + ph_pos, reverse_x ? c.height - p_pos : p_pos, 10, 0, 2 * Math.PI);
+                        ctx.fill();
+                    } else {
+                        // Draw the player head first
+                        ctx.beginPath();
+                        ctx.fillStyle = rg.team == "red" ? "rgba(200,0,0)" : "rgba(0,0,200)";
+                        ctx.arc(reverse_x ? c.width - rg.position - ph_pos : rg.position + ph_pos, reverse_x ? c.height - p_pos : p_pos, 10, 0, 2 * Math.PI);
+                        ctx.fill();
+
+                        ctx.beginPath();
+                        ctx.fillStyle = rg.team;
+                        ctx.rect(xpos - 10, ypos - 20, 20, 40);
+                        ctx.fill();
+
+                        // Draw the feet
+                        ctx.beginPath();
+                        ctx.fillStyle = rg.team;
+
+                        ctx.moveTo(xpos, ypos - 15);
+                        ctx.lineTo(xpos + pf_pos, ypos - 8);
+                        ctx.lineTo(xpos + pf_pos, ypos + 8);
+                        ctx.lineTo(xpos, ypos + 15);
+                        ctx.lineTo(xpos, ypos - 15);
+                        ctx.fill();
+                    }
+
+                    /*
+    
+                    // Draw the angle on top
+                    let angle = -data.rod_angle[i] / 32.0 * Math.PI * (reverse_x ? -1 : 1) + (reverse_x ? Math.PI : 0);
+                    ctx.beginPath();
+                    ctx.moveTo(reverse_x ? c.width - rg.position : rg.position, reverse_x ? c.height - p_pos : p_pos);
+                    ctx.lineTo(reverse_x ? c.width - rg.position - Math.sin(angle) * 20 : rg.position + Math.sin(angle) * 20, reverse_x ? c.height - p_pos - Math.cos(angle) * 20 : p_pos + Math.cos(angle) * 20);
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 6;
+                    ctx.stroke();
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    */
+                }
+            }
+        }
+
+        function drawRods(ctx) {
+            for (let i = 0; i < 8; i++) {
+                let rg = field_geometry.rods[i];
+                // Draw the rod
+                ctx.beginPath();
+                ctx.strokeStyle = '#A0A0A0';
+                ctx.moveTo(rg.position, 5);
+                ctx.lineTo(rg.position, field_geometry.field.dimension_y - 5);
+                ctx.lineWidth = 10;
+                ctx.stroke();
+            }
+        }
+
+        function refresh_level() {
+            var c = $('#level_dial')[0];
+            var ctx = c.getContext("2d");
+            ctx.clearRect(0, 0, c.width, c.height);
+
+
+            ctx.font = "40px Tahoma";
+            ctx.fillStyle = 'rgba(255,255,255,255)';
+
+            let angleDiff = 0.5;
+            let r = 150;
+
+            let y0 = c.height / 2;
+
+            let yOff = 18;
+            let level = currentLevel;
+            if (level < 0)
+                return;
+            if (level > 100) level = 100;
+
+
+            // Draw easy, medium, pro
+            //ctx.fillText("Easy", 1.1*r * Math.cos(-angleDiff), y0 + 1.1*r * Math.sin(angleDiff) + yOff);
+            //ctx.fillText("Med.", 1.1 * r * Math.cos(0 * angleDiff), y0 + 1.1 *r * Math.sin(0 * angleDiff) + yOff);
+            // ctx.fillText("Pro", 1.1 * r * Math.cos(angleDiff), y0 + 1.1 *r * Math.sin(-angleDiff) + yOff);
+
+            //la = -angleDiff + (100 - level*1.1) / 100 * (2 * angleDiff);
+
+            r = 75;
+            let la = -1*Math.PI + level / 100 * 1.25 * Math.PI;
+
+
+            
+            /*
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.arc(0, y0, 1 * r, -angleDiff, angleDiff);
+
+            for (var i = -1; i <= 1; i++) {
+                let a = i * angleDiff;
+                ctx.moveTo(0.95 * r * Math.cos(a), y0 + 0.95 * r * Math.sin(a))
+                ctx.lineTo(1.05 * r * Math.cos(a), y0 + 1.05 * r * Math.sin(a))
+            }
+
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0.3 * r * Math.cos(la), y0 + 0.3 * r * Math.sin(la));
+            ctx.lineTo(0.9*r*Math.cos(la), y0 + 0.9*r*Math.sin(la));
+            ctx.moveTo(0.8 * r * Math.cos(la + 0.15), y0 + 0.8 * r * Math.sin(la + 0.15));
+            ctx.lineTo(0.9 * r * Math.cos(la), y0 + 0.9 * r * Math.sin(la));
+            ctx.lineTo(0.8 * r * Math.cos(la - 0.15), y0 + 0.8 * r * Math.sin(la - 0.15));
+            ctx.lineWidth = 10;
+            ctx.stroke();
+            */
+
+            let center = { x: 130, y: 125 };
+            /*
+            ctx.beginPath();
+            ctx.fillStyle = 'black';
+            ctx.strokeStyle = 'black';
+            ctx.arc(center.x, center.y, 10, 0, 2*Math.PI);            
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(center.x, center.y);
+            ctx.lineTo(center.x + 0.9 * r * Math.cos(la), center.y + 0.9 * r * Math.sin(la));
+            ctx.moveTo(center.x + 0.8 * r * Math.cos(la + 0.15), center.y + 0.8 * r * Math.sin(la + 0.15));
+            ctx.lineTo(center.x + 0.9 * r * Math.cos(la), center.y + 0.9 * r * Math.sin(la));
+            ctx.lineTo(center.x + 0.8 * r * Math.cos(la - 0.15), center.y + 0.8 * r * Math.sin(la - 0.15));
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            */
+
+            ctx.fillStyle = 'rgba(237,100,50,255)';            
+
+            ctx.beginPath();            
+            ctx.moveTo(center.x + r * Math.cos(la), center.y + r * Math.sin(la));
+            ctx.lineTo(center.x + 0.9 * r * Math.cos(la + 0.05), center.y + 0.9 * r * Math.sin(la + 0.05));
+            ctx.lineTo(center.x + 0.1 * r * Math.cos(la + Math.PI / 2), center.y + 0.1 * r * Math.sin(la + Math.PI / 2));
+            ctx.lineTo(center.x + 0.1 * r * Math.cos(la - Math.PI / 2), center.y + 0.1 * r * Math.sin(la - Math.PI / 2));
+            ctx.lineTo(center.x + 0.9 * r * Math.cos(la - 0.05), center.y + 0.9 * r * Math.sin(la - 0.05));
+            ctx.moveTo(center.x + r * Math.cos(la), center.y + r * Math.sin(la));
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(50,50,50,255)';
+
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, 20, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        function refresh_rod_states() {
+            
+            let loc = $('#replay-location')[0].value / 1000;
+            let url = (replayMode == 0) ? "Camera/State?" : ("Camera/Replay?location=" + loc + "&");
+
+            data = $.getJSON(url + 't=' + new Date().getTime(), function (data) {
+
+                let reverse_x = $('#chk-invert').prop('checked');
+                let camOption = parseInt($("#cmb-camera").val());
+
+                camera_state = data;
+                var c = $('#myoverlay')[0];
+                var ctx = c.getContext("2d");
+
+                ctx.clearRect(0, 0, c.width, c.height);
+
+
+                if (camera_state.camDataOK[0] == false && camera_state.camDataOK[1] == false) {
+                    msgField.innerHTML = "Waiting data...";
+                    return;
+                } else {
+                    //msgField.innerHTML = "";
+                }
+
+                let CD0 = camera_state.camData[0];
+                let CD1 = camera_state.camData[1];
+
+                let r = 17;
+                
+                if (replayMode == 1) {
+                    //let t = new Date().getTime();
+                    let t = new Date(CD0.timestamp);
+
+                    zeroPad = function (nNum, nPad) {
+                        return ('' + (Math.pow(10, nPad) + nNum)).slice(1);
+                    };
+                    $('#timestamp')[0].innerHTML = zeroPad(t.getHours(), 2) + ":" + zeroPad(t.getMinutes(), 2) + ":" + zeroPad(t.getSeconds(), 2) + "." + zeroPad(t.getMilliseconds(), 3);
+                }
+
+
+                // Only camera 1
+                if (camOption == 2) {
+                    // Draw the ball
+                    if (CD0.ball_size > 50) {
+                        ctx.beginPath();
+                        ctx.fillStyle = 'rgba(255,230,0,150)';
+                        ctx.arc(reverse_x ? c.width - CD0.ball_x : CD0.ball_x, reverse_x ? c.height - CD0.ball_y : CD0.ball_y, r, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                    drawRods(ctx);
+                    draw_players(ctx, CD0, calib_data[0], reverse_x);
+
+                    return;
+                } else if (camOption == 3) {
+                    // Draw the ball
+                    if (CD1.ball_size > 50) {
+                        ctx.beginPath();
+                        ctx.fillStyle = 'rgba(255,230,0,150)';
+                        ctx.arc(reverse_x ? c.width - CD1.ball_x : CD1.ball_x, reverse_x ? c.height - CD1.ball_y : CD1.ball_y, r, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                    drawRods(ctx);
+                    draw_players(ctx, CD1, calib_data[1], reverse_x);
+                    return;
+                }
+
+                let tw = (Math.pow(CD0.ball_size, 2) + Math.pow(CD1.ball_size, 2));
+                if (tw > 50) {
+                    let bx = (CD0.ball_x * Math.pow(CD0.ball_size, 2) + CD1.ball_x * Math.pow(CD1.ball_size, 2)) / tw;
+                    let by = (CD0.ball_y * Math.pow(CD0.ball_size, 2) + CD1.ball_y * Math.pow(CD1.ball_size, 2)) / tw;
+
+                    let vx = (CD0.ball_vx * Math.pow(CD0.ball_size, 2) + CD1.ball_vx * Math.pow(CD1.ball_size, 2)) / tw;
+                    let vy = (CD0.ball_vy * Math.pow(CD0.ball_size, 2) + CD1.ball_vy * Math.pow(CD1.ball_size, 2)) / tw;
+
+                    //vx = CD0.ball_vx;
+                    //vy = CD0.ball_vy;
+
+
+                    if (camOption == 1) {
+                        // Draw the ball
+                        ctx.beginPath();
+                        ctx.fillStyle = 'rgba(255,230,0,150)';
+                        ctx.arc(reverse_x ? c.width - CD0.ball_x : CD0.ball_x, reverse_x ? c.height - CD0.ball_y : CD0.ball_y, r, 0, 2 * Math.PI);
+                        ctx.arc(reverse_x ? c.width - CD1.ball_x : CD1.ball_x, reverse_x ? c.height - CD1.ball_y : CD1.ball_y, r, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+
+                    if (replayMode == 0) {
+                        // Draw projected ball positions (only in realtime display)
+                        tmpx = bx;
+                        tmpy = by;
+                        ctx.beginPath();
+                        for (let ft = 0; ft < 0.5; ft += 0.1) {
+                            tmpx = tmpx + vx * 1000 * 0.1;
+                            tmpy = tmpy + vy * 1000 * 0.1;
+                            ctx.arc(reverse_x ? c.width - tmpx : tmpx, reverse_x ? c.height - tmpy : tmpy, 17 - ft * 17, 0, 2 * Math.PI);
+                        }
+                        ctx.fillStyle = 'rgba(255,200,200)';
+                        ctx.fill();
+                    }
+
+                    ctx.beginPath();
+                    ctx.fillStyle = 'rgba(255,150,0)';
+                    ctx.arc(reverse_x ? c.width - bx : bx, reverse_x ? c.height - by : by, r, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+
+                drawRods(ctx);
+
+                draw_players(ctx, CD0, calib_data[0], reverse_x, 0, 3);
+                draw_players(ctx, CD1, calib_data[1], reverse_x, 4, 7);
+            });
+        }
+
+        /*
+        function refresh_score() {
+            data = $.getJSON('Score?' + new Date().getTime(), function (data) {
+                let reverse_x = $('#chk-invert').prop('checked');
+
+                let leftScore = document.getElementById('overlayimg').getSVGDocument().getElementById("score_left").firstChild;
+                let rightScore = document.getElementById('overlayimg').getSVGDocument().getElementById("score_right").firstChild;
+
+                let scoreAI = reverse_x ? leftScore : rightScore;
+                let scorePlayer = reverse_x ? rightScore : leftScore;
+
+                scoreAI.style.fill = 'red'
+                scoreAI.innerHTML = data.fuzbAI.toString();
+
+                scorePlayer.style.fill = 'blue'
+                scorePlayer.innerHTML = data.player.toString();
+
+                currentLevel = data.level;
+            });
+        }
+        */
+
+        function refresh_competition() {
+            data = $.getJSON('Competition?noResults=1&t=' + new Date().getTime(), function (data) {
+                let competitionState = data.state;
+                let playTime = data.time;
+                let player = data.playerName;
+
+                if (competitionState != 3) {
+                    resultsDisplayed = false;
+                }
+
+                let reverse_x = $('#chk-invert').prop('checked');
+
+                let leftScore = document.getElementById('overlayimg').getSVGDocument().getElementById("score_left").firstChild;
+                let rightScore = document.getElementById('overlayimg').getSVGDocument().getElementById("score_right").firstChild;
+
+                let scoreAI = reverse_x ? leftScore : rightScore;
+                let scorePlayer = reverse_x ? rightScore : leftScore;
+
+                scoreAI.style.fill = 'red'
+                scoreAI.innerHTML = data.scoreFuzbAI.toString();
+
+                scorePlayer.style.fill = 'blue'
+                scorePlayer.innerHTML = data.scorePlayer.toString();
+
+                currentLevel = data.level;
+
+
+
+                switch (competitionState) {
+                    case 0:
+                        set_msg_competition(null);
+                        set_time_left(null);
+                        set_player_name(null);
+                        $('#resultsOverlay')[0].style.display = "none";
+                        $('#resultsBackground')[0].style.display = "none";
+                        break;
+
+                    case 1:
+                        set_msg_competition("Insert the ball to start");
+                        set_time_left(playTime);
+                        set_player_name(player);
+                        $('#resultsOverlay')[0].style.display = "none";
+                        $('#resultsBackground')[0].style.display = "block";
+                        break;
+
+                    case 2:
+                        set_msg_competition(null);
+                        set_time_left(playTime);
+                        set_player_name(player);
+                        $('#resultsOverlay')[0].style.display = "none";
+                        $('#resultsBackground')[0].style.display = "none";
+                        break;
+
+                    case 3: {
+                        if (resultsDisplayed)
+                            break;
+
+                        // Request results
+                        data = $.getJSON('Competition?noResults=0&t=' + new Date().getTime(), function (data) {
+                            let competitionState = data.state;
+                            let playTime = data.time;
+                            let player = data.playerName;
+
+                            let resultsTable = data.results;
+                            let lastResultInd = data.lastResultIndex;
+
+                            // Render results
+                            let results = '<table id="resultsTable">';
+                            results += "<thead><tr><th width='8%'>No.</th><th width='40%'>Team</th><th width='25%'>Result</th><th width='25%'></th></tr></thead><tbody>";
+                            for (var i = 0; i < resultsTable.length && i < 10; i++) {
+                                let tLeft = parseInt(resultsTable[i].gameTimeSinceLastGoal / 1000);
+                                if (resultsTable[i].gameScorePlayer < 5) {
+                                    tLeft = 0;
+                                }
+                                let timeValue = " " + parseInt(tLeft / 60) + ":" + String(tLeft % 60).padStart(2, '0');
+
+                                let diff = resultsTable[i].gameScorePlayer - resultsTable[i].gameScoreFuzbAI;
+                                let scoreDiff = diff.toString();
+                                if (diff >= 0) scoreDiff = "+" + scoreDiff;
+
+                                /*results += "<tr" + (lastResultInd == i ? ' id="lastresult"'  : "") + "><td>" + (i + 1) + "</td><td>" +
+                                    resultsTable[i].playerName + "</td><td>" + 
+                                    resultsTable[i].gameScorePlayer + " : " + resultsTable[i].gameScoreFuzbAI + '<p id="scorediff">'  '</p></td><td>' +
+                                    timeValue + "</td></tr>";
+                                    */
+
+                                let gamesPlayed = (resultsTable[i].gamesPlayed > 1) ? `<p id="gamesplayed">(${resultsTable[i].gamesPlayed} games)</p>` : '';
+
+                                results += `<tr${(lastResultInd == i ? ' id="lastresult"' : "")}><td>${i + 1}</td><td>${resultsTable[i].playerName}${gamesPlayed}</td>` +
+                                    `<td>${resultsTable[i].gameScorePlayer}:${resultsTable[i].gameScoreFuzbAI}<p id="scorediff">(${scoreDiff} / ${tLeft} s)</p></td>` +
+                                    `<td><canvas class="scorecanvas" id="score${i}" width="300" height="40" /></td></tr>`;
+                            }
+
+                            if (lastResultInd > 9) {
+
+                                let tLeft = parseInt(resultsTable[lastResultInd].gameTimeSinceLastGoal / 1000);
+                                if (resultsTable[lastResultInd].gameScorePlayer < 5) {
+                                    tLeft = 0;
+                                }
+                                let timeValue = " " + parseInt(tLeft / 60) + ":" + String(tLeft % 60).padStart(2, '0');
+
+                                let diff = resultsTable[lastResultInd].gameScorePlayer - resultsTable[lastResultInd].gameScoreFuzbAI;
+                                let scoreDiff = diff.toString();
+                                if (diff >= 0) scoreDiff = "+" + scoreDiff;
+                                /*
+                                results += '<tr id="lastresult"><td>' + (lastResultInd + 1) + "</td><td>" +
+                                    resultsTable[lastResultInd].playerName + "</td><td>" +
+                                    resultsTable[lastResultInd].gameScorePlayer + " : " + resultsTable[lastResultInd].gameScoreFuzbAI + "</td><td>" +
+                                    timeValue + "</td></tr>"; */
+                                let gamesPlayed = (resultsTable[lastResultInd].gamesPlayed > 1) ? `<p id="gamesplayed">(${resultsTable[lastResultInd].gamesPlayed} games)</p>` : '';
+                                results += `<tr id="lastresult"><td>${lastResultInd + 1}</td><td>${resultsTable[lastResultInd].playerName}${gamesPlayed}</td>` +
+                                    `<td>${resultsTable[lastResultInd].gameScorePlayer}:${resultsTable[lastResultInd].gameScoreFuzbAI}<p id="scorediff">(${scoreDiff} / ${tLeft} s)</p></td>` +
+                                    `<td><canvas class="scorecanvas" id="score${i}" width="300" height="40" /></td></tr>`;
+                            }
+                            results += "</tbody></table>";
+                            $('#results_table_div')[0].innerHTML = results;
+                            $('#resultsOverlay')[0].style.display = "block";
+                            $('#resultsBackground')[0].style.display = "block";
+
+                            // Render the scores
+                            for (var i = 0; i < resultsTable.length && i < 10; i++) {
+                                render_events($('#score' + i)[0], resultsTable[i].gameEvents.gameEvents);
+                            }
+                            if (lastResultInd >= 0) {
+                                render_events($('#score' + lastResultInd)[0], resultsTable[lastResultInd].gameEvents.gameEvents);
+                            }
+                            set_msg_competition("Try to beat the AI<br>Gioca e batti l'IA");
+                            //set_msg_competition("  Beat the ROBOT and get the PRIZE!");
+                            //set_msg_competition("  Preizkusi se!");
+                            set_time_left(playTime);
+                            set_player_name(player);
+                        });
+                        resultsDisplayed = true;
+                        break;
+                    }
+                }
+
+
+
+
+
+                /*
+                            return Json(new {
+                                State = GlobalData.competitionManager.CompetitionState,
+                                Time = GlobalData.competitionManager.PlayTime,
+                                PlayerName = GlobalData.competitionManager.currentPlayerName,
+                                ScorePlayer = GlobalData.scores.playerScore,
+                                ScoreFuzbAI = GlobalData.scores.fuzbAIScore,
+                                Results = GlobalData.competitionManager.gameResults
+                            });
+    
+                */
+            });
+        }
+
+        function render_events(c, ev) {
+            var ctx = c.getContext("2d");
+
+            // Scale factor
+            let sf = c.width / 120;
+
+            ctx.clearRect(0, 0, c.width, c.height);
+
+
+            let endTime = 120;
+            // Draw end of game
+            for (var i = 0; i < ev.length; i++) {
+                if (ev[i].eventType == "end") {
+                    endTime = Math.floor(ev[i].gameTimestamp / 1000);
+                }
+            }
+
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, 20);
+            ctx.lineTo(endTime * sf, 20);
+            ctx.moveTo(1, 10);
+            ctx.lineTo(1, 30);
+            ctx.stroke();
+
+            // Grey line to the end
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "grey";
+            ctx.beginPath();
+            ctx.moveTo(endTime * sf, 20);
+            ctx.lineTo(120 * sf, 20);
+            ctx.stroke();
+
+            // Draw end of game
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.strokeStyle = "#00ff00a0";
+            ctx.moveTo(endTime * sf, 3);
+            ctx.lineTo(endTime * sf, 38);
+            ctx.stroke();
+
+            
+            
+
+            ctx.lineWidth = 5;
+            // Draw goals by player 0 (human = blue)
+            ctx.beginPath();
+            ctx.strokeStyle = "#2020ffd0";
+            for (var i = 0; i < ev.length; i++) {
+                if (ev[i].eventType == "goal" && ev[i].playerID == 0) {                    
+                    ctx.moveTo(Math.floor(ev[i].gameTimestamp / 1000) * sf, 0);
+                    ctx.lineTo(Math.floor(ev[i].gameTimestamp / 1000) * sf, 19);
+                }
+            }
+            ctx.stroke();
+
+            // Draw goals by player 1 (AI = red)
+            ctx.beginPath();
+            ctx.strokeStyle = "#ff0000b0";
+            for (var i = 0; i < ev.length; i++) {
+                if (ev[i].eventType == "goal" && ev[i].playerID == 1) {
+                    ctx.moveTo(Math.floor(ev[i].gameTimestamp / 1000) * sf, 21);
+                    ctx.lineTo(Math.floor(ev[i].gameTimestamp / 1000) * sf, 40);
+                }
+            }
+            ctx.stroke();
+
+
+
+            ctx.beginPath();
+            // Draw ball status - assume ball is not visible on start
+            ctx.strokeStyle = "#fff900a0";
+            ctx.lineWidth = 5;
+            ctx.moveTo(2, 17);
+            for (var i = 0; i < ev.length; i++) {
+                if (ev[i].eventType == "ball") {
+                    // Draw the line from noBallTime to new time
+                    ctx.lineTo(Math.floor(ev[i].gameTimestamp / 1000) * sf, 20);
+                } else if (ev[i].eventType == "no_ball") {
+                    ctx.moveTo(Math.floor(ev[i].gameTimestamp / 1000) * sf, 20);
+                }
+            }
+            ctx.stroke();
+
+            ctx.beginPath();
+            // Draw motor status - assume motors activated on start
+            ctx.strokeStyle = "#eb00dfa0";
+            ctx.lineWidth = 9;
+            ctx.moveTo(2, 23);
+            for (var i = 0; i < ev.length; i++) {
+                if (ev[i].eventType == "running") {
+                    // Draw the line from noBallTime to new time
+                    ctx.lineTo(Math.floor(ev[i].gameTimestamp / 1000) * sf, 20);
+                } else if (ev[i].eventType == "stopped") {
+                    ctx.moveTo(Math.floor(ev[i].gameTimestamp / 1000) * sf, 20);
+                }
+            }
+            ctx.stroke();
+
+
+            
+
+
+
+        }
+
+        function set_player_name(msg) {
+            let nameField_left = document.getElementById('overlayimg').getSVGDocument().getElementById("name_display").firstChild;
+            let nameField_right = document.getElementById('overlayimg').getSVGDocument().getElementById("name_display_right").firstChild;
+
+            let reverse_x = $('#chk-invert').prop('checked');
+
+            let nameAI = reverse_x ? nameField_left : nameField_right;
+            let namePlayer = reverse_x ? nameField_right : nameField_left;
+
+            let field_size = 17;
+
+            if (msg == null) {
+                namePlayer.innerHTML = "";
+            } else {
+                if (msg.length > field_size)
+                    msg = msg.substring(0, field_size);
+
+                namePlayer.innerHTML = msg.padStart(reverse_x ? 0 : field_size, ' ');
+            }
+
+            nameAI.innerHTML = "FuzbAI".padStart(reverse_x ? field_size : 0, ' ');
+        }
+
+        function set_msg_competition(msg) {
+            $('#msgOverlay')[0].innerHTML = msg;
+            if (msg == null) {
+                $('#msgOverlay')[0].style.display = "none";
+            } else {
+                $('#msgOverlay')[0].style.display = "block";
+            }
+            
+            return;
+
+
+            let msgFieldCompetition = document.getElementById('overlayimg').getSVGDocument().getElementById("msg").firstChild;
+            msgFieldCompetition.innerHTML = msg;
+
+            return;
+
+            //let msgFieldBackground = document.getElementById('overlayimg').getSVGDocument().getElementById("msg_back");
+
+            if (msg == null) {
+                msgFieldCompetition.innerHTML = "";
+                msgFieldBackground.style.display = "none";
+            } else {
+                msgFieldCompetition.innerHTML = msg;
+                msgFieldBackground.style.display = "block";
+            }
+        }
+
+        function set_time_left(time_seconds) {
+            //let time_group = document.getElementById('overlayimg').getSVGDocument().getElementById("time_display");
+
+            if (time_seconds == null) {
+                //time_group.style.display = "none";
+            } else {
+                //time_group.style.display = "block";
+
+                let time_sec = document.getElementById('overlayimg').getSVGDocument().getElementById("time_seconds").firstChild;
+                let time_min = document.getElementById('overlayimg').getSVGDocument().getElementById("time_minutes").firstChild;
+
+                time_min.innerHTML = parseInt(time_seconds / 60);
+                time_sec.innerHTML = String(time_seconds % 60).padStart(2, '0')
+            }
+        }
+
+
+        function refresh() {
+            if (msgField == null) {
+                msgField = document.getElementById('overlayimg').getSVGDocument().getElementById("msg").firstChild;
+                msgField.innerHTML = "Waiting data...";
+            }
+
+            let camID = $("#cmb-camera").val();
+
+            //refresh_score();
+            refresh_rod_states();
+            refresh_competition();
+            refresh_level();
+        }
+    </script>
+</head>
+<body>
+    <div style="position: absolute; top: -15px;">
+        <object id="backimg" type="image/svg+xml" data="Igrisce.svg" width="83%"></object>
+    </div>
+    <div style="position: absolute; top: -15px; z-index: 5;">
+        <object id="overlayimg" type="image/svg+xml" data="Igrisce_overlay_game.svg" width="100%"></object>
+    </div>
+    <!--
+    <div style="position: absolute; top: -15px; z-index: 6;">
+        <object id="overlayimgcomp" type="image/svg+xml" data="Competition_overlay.svg" width="100%"></object>
+    </div>
+        -->
+    <div id="resultsBackground">
+    </div>
+
+    <div id="resultsOverlay" style="z-index: 12;">
+        <div id="results_table_div">
+
+        </div>
+        <div id="results_title">
+            RESULTS
+        </div>
+    </div>
+    <canvas id="myoverlay" width="1210" height="700" style="top: -15px; left: 0px;  width: 83%; border:1px solid #000000; position:absolute; z-index:8"></canvas>
+    <div id="camera_options" style="position: absolute; top: 0px; left: 0px; margin: 0px; padding: 5px; background-color: rgba(255, 255, 255, 0.8); z-index: 10;">
+        <select id="cmb-camera">
+            <option value="0">Final</option>
+            <option value="1">Combination</option>
+            <option value="2">Camera 1</option>
+            <option value="3">Camera 2</option>
+        </select>
+        <input type="checkbox" id="chk-invert"><label for="chk-invert">Invert left-right</label>
+    </div>
+
+    <div id="replayOverlay" style="display: none; position: absolute; top: 5px; left: 50%; width: 30%; height: 10%; text-align: right; font-size: 8vh; font-weight: 800;">
+        <p>&lt;&lt; Replay</p>
+    </div>
+
+    <div id="msgOverlay">
+    </div>
+
+
+    <div id="replay_options" style="position: absolute; top: 0px; left: 83%; width: 17%; margin: 0px; padding: 5px; background-color: rgba(255, 255, 255, 0.8); z-index: 10;">
+        <select id="cmb-file">
+        </select>
+        <div style="display: flex; padding: 5px;">
+            <button id="load-replay">Load</button>
+            <button id="save-replay">Save</button>
+            <button id="do-replay">Replay</button>
+        </div>
+        <div id="timestamp" style="display: none">xx:xx:xx.xxx</div>
+        <input type="range" min="1" max="1000" value="0" class="slider" id="replay-location" style="width: 95%; display: none;" />
+    </div>
+
+    <div style="top: 0px; left: 0px; width: 100%; aspect-ratio: 1210/700; position: absolute;">
+        <canvas id="level_dial" width="250" height="250" style="right: 1%; bottom: 2%; width: 15%; aspect-ratio: 1; position: absolute; z-index: 10; "></canvas>
+    </div>
+
+
+
+
+
+
+</body>
+</html>

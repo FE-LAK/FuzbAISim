@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>FuzbAI Competition Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- jQuery / jQuery UI if you already use them -->
+    <script src="jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="jquery-ui.min.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #05061a;
+            color: #f4f4f8;
+        }
+
+        #top-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: #0b0c2a;
+            border-bottom: 1px solid #22254a;
+        }
+
+        #top-menu-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-right: 24px;
+        }
+
+        .menu-tab {
+            border: none;
+            padding: 8px 16px;
+            background: #1d1f4f;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .menu-tab.active {
+            background: #e53935;
+        }
+
+        #unsaved-indicator {
+            margin-left: auto;
+            font-size: 12px;
+            color: #ffc107;
+            display: none;
+        }
+
+        .view-panel {
+            display: none;
+            padding: 16px;
+        }
+
+        .view-panel.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            background: #3949ab;
+            color: #fff;
+        }
+
+        .btn.secondary {
+            background: #424242;
+        }
+
+        .btn.danger {
+            background: #e53935;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .layout-row {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .card {
+            background: #101233;
+            border-radius: 6px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        /* remove motion on hover */
+        .card:hover {
+            transform: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            color: #f4f4f8;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #272a4e;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: #15183b;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            background: #0c0e29;
+            border: 1px solid #272a4e;
+            border-radius: 4px;
+            padding: 4px 6px;
+            color: #f4f4f8;
+            font-size: 13px;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.1);
+        }
+
+        #results-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        #results-table-container {
+            max-height: 70vh;
+            overflow: auto;
+        }
+
+        #standings-table-container {
+            max-height: 50vh;
+            overflow: auto;
+        }
+
+        .dialog-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .dialog {
+            background: #101233;
+            border-radius: 6px;
+            padding: 16px;
+            min-width: 320px;
+        }
+
+        .dialog h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+
+        .dialog-row {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .dialog-row label {
+            font-size: 13px;
+        }
+
+        .mt-8 {
+            margin-top: 8px;
+        }
+
+        .mt-12 {
+            margin-top: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="top-menu">
+        <div id="top-menu-title">FuzbAI Competition Manager</div>
+        <button class="menu-tab active" data-target="view-simulators">Simulators</button>
+        <button class="menu-tab" data-target="view-teams">Teams</button>
+        <button class="menu-tab" data-target="view-results">Results</button>
+        <div id="unsaved-indicator">Unsaved results</div>
+    </div>
+
+    <!-- Simulators view -->
+    <div id="view-simulators" class="view-panel active">
+        <div class="section-header">
+            <h2>Match Arena</h2>
+            <div>
+                <button id="reset-all-btn" class="btn danger">Reset All</button>
+                <button id="start-all-btn" class="btn">Start All</button>
+                <button id="pause-all-btn" class="btn secondary">Pause All</button>
+                <button id="auto-assign-btn" class="btn secondary">Auto-Assign Pairings</button>
+                <button id="store-results-btn" class="btn secondary" disabled>
+                    Store results &amp; new game
+                </button>
+            </div>
+        </div>
+
+        <div class="layout-row">
+            <div class="card" style="flex: 2;">
+                <h3>Simulators</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Port</th>
+                            <th>Enabled</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="simulators-body">
+                        <!-- filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="flex: 3;">
+                <h3>Games</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Simulator</th>
+                            <th>Red Team</th>
+                            <th>Blue Team</th>
+                            <th>State</th>
+                        </tr>
+                    </thead>
+                    <tbody id="games-body">
+                        <!-- filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teams view -->
+    <div id="view-teams" class="view-panel">
+        <div class="section-header">
+            <h2>Team Ecosystem</h2>
+            <button id="add-team-open-btn" class="btn">Add New Team</button>
+        </div>
+
+        <div class="layout-row">
+            <div class="card" style="flex: 3;">
+                <h3>Teams</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Proxy Port</th>
+                            <th>Enabled</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teams-body">
+                        <!-- filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="flex: 2;">
+                <h3>Ranked Standings</h3>
+                <div id="standings-table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>POS</th>
+                                <th>TEAM</th>
+                                <th>P</th>
+                                <th>W</th>
+                                <th>D</th>
+                                <th>L</th>
+                                <th>GD</th>
+                                <th>PTS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="standings-body">
+                            <!-- filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results view -->
+    <div id="view-results" class="view-panel">
+        <div class="section-header">
+            <h2>Results Hub</h2>
+            <div>
+                <button id="clear-results-btn" class="btn secondary">Clear All Results</button>
+            </div>
+        </div>
+
+        <div id="results-layout">
+            <div class="card" id="results-hub">
+                <h3>Overview</h3>
+                <p>Total games: <span id="results-count">0</span></p>
+                <p>Last update: <span id="results-last-update">–</span></p>
+            </div>
+
+            <div class="card" id="results-table-container">
+                <h3>Game Results</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Simulator</th>
+                            <th>Red Team</th>
+                            <th>Blue Team</th>
+                            <th>Red Score</th>
+                            <th>Blue Score</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <!-- filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add team dialog -->
+    <div id="add-team-dialog" class="dialog-backdrop">
+        <div class="dialog">
+            <h3>Add New Team</h3>
+            <div class="dialog-row">
+                <label for="team-id-input">Team ID</label>
+                <input type="text" id="team-id-input">
+            </div>
+            <div class="dialog-row">
+                <label for="team-name-input">Team Name</label>
+                <input type="text" id="team-name-input">
+            </div>
+            <div class="dialog-row">
+                <label for="team-port-input">Proxy Port</label>
+                <input type="number" id="team-port-input">
+            </div>
+            <div class="mt-12" style="text-align: right;">
+                <button id="add-team-cancel-btn" class="btn secondary">Cancel</button>
+                <button id="add-team-save-btn" class="btn">Add Team</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit result dialog -->
+    <div id="edit-result-dialog" class="dialog-backdrop">
+        <div class="dialog">
+            <h3>Edit Game Result</h3>
+            <div class="dialog-row">
+                <label>Red Score</label>
+                <input type="number" id="edit-red-score" min="0">
+            </div>
+            <div class="dialog-row">
+                <label>Blue Score</label>
+                <input type="number" id="edit-blue-score" min="0">
+            </div>
+            <div class="mt-12" style="text-align: right;">
+                <button id="edit-result-cancel-btn" class="btn secondary">Cancel</button>
+                <button id="edit-result-save-btn" class="btn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State -------------------------------------------------------------
+        let simulators = [
+            { id: 'sim1', name: 'Simulator 1', port: 30001, enabled: true, status: 'ready' },
+            { id: 'sim2', name: 'Simulator 2', port: 30002, enabled: true, status: 'ready' }
+        ];
+
+        let teams = [
+            { id: 'T1', name: 'Team 1', port: 29001, enabled: true },
+            { id: 'T2', name: 'Team 2', port: 29002, enabled: true },
+            { id: 'T3', name: 'Team 3', port: 29003, enabled: true }
+        ];
+
+        let games = [];   // {simId, redId, blueId, state}
+        let results = []; // {id, simId, redId, blueId, redScore, blueScore}
+
+        let hasUnsavedResults = false;
+        let editResultIndex = null;
+
+        // --- Helper functions --------------------------------------------------
+        function updateUnsavedIndicator() {
+            const el = document.getElementById('unsaved-indicator');
+            el.style.display = hasUnsavedResults ? 'block' : 'none';
+            updateStoreResultsButton();
+        }
+
+        function areAllGamesStopped() {
+            return games.length > 0 && games.every(g => g.state === 'stopped');
+        }
+
+        function updateStoreResultsButton() {
+            const btn = document.getElementById('store-results-btn');
+            btn.disabled = !(hasUnsavedResults && areAllGamesStopped());
+        }
+
+        function renderSimulators() {
+            const body = document.getElementById('simulators-body');
+            body.innerHTML = '';
+            simulators.forEach(sim => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td>${sim.id}</td>
+          <td>${sim.name}</td>
+          <td>${sim.port}</td>
+          <td><input type="checkbox" class="sim-enabled" data-sim-id="${sim.id}" ${sim.enabled ? 'checked' : ''}></td>
+          <td>${sim.status}</td>
+        `;
+                body.appendChild(tr);
+            });
+        }
+
+        function renderTeams() {
+            const body = document.getElementById('teams-body');
+            body.innerHTML = '';
+            teams.forEach(team => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td>${team.id}</td>
+          <td>${team.name}</td>
+          <td>${team.port}</td>
+          <td><input type="checkbox" class="team-enabled" data-team-id="${team.id}" ${team.enabled ? 'checked' : ''}></td>
+        `;
+                body.appendChild(tr);
+            });
+        }
+
+        function renderGames() {
+            const body = document.getElementById('games-body');
+            body.innerHTML = '';
+            games.forEach(g => {
+                const sim = simulators.find(s => s.id === g.simId);
+                const red = teams.find(t => t.id === g.redId);
+                const blue = teams.find(t => t.id === g.blueId);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td>${sim ? sim.name : g.simId}</td>
+          <td>${red ? red.name : g.redId}</td>
+          <td>${blue ? blue.name : g.blueId}</td>
+          <td>${g.state}</td>
+        `;
+                body.appendChild(tr);
+            });
+            updateStoreResultsButton();
+        }
+
+        function renderResults() {
+            const body = document.getElementById('results-body');
+            body.innerHTML = '';
+            results.forEach((r, idx) => {
+                const sim = simulators.find(s => s.id === r.simId);
+                const red = teams.find(t => t.id === r.redId);
+                const blue = teams.find(t => t.id === r.blueId);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>${sim ? sim.name : r.simId}</td>
+          <td>${red ? red.name : r.redId}</td>
+          <td>${blue ? blue.name : r.blueId}</td>
+          <td>${r.redScore}</td>
+          <td>${r.blueScore}</td>
+          <td>
+            <button class="btn secondary btn-edit-result" data-index="${idx}">Edit</button>
+          </td>
+        `;
+                body.appendChild(tr);
+            });
+
+            document.getElementById('results-count').textContent = results.length;
+            document.getElementById('results-last-update').textContent =
+                results.length ? new Date().toLocaleString() : '–';
+            renderStandings();
+        }
+
+        function renderStandings() {
+            const stats = {};
+            teams.forEach(t => {
+                stats[t.id] = { team: t, P: 0, W: 0, D: 0, L: 0, GF: 0, GA: 0 };
+            });
+
+            results.forEach(r => {
+                if (!stats[r.redId] || !stats[r.blueId]) return;
+                const red = stats[r.redId];
+                const blue = stats[r.blueId];
+                red.P++; blue.P++;
+                red.GF += r.redScore; red.GA += r.blueScore;
+                blue.GF += r.blueScore; blue.GA += r.redScore;
+                if (r.redScore > r.blueScore) {
+                    red.W++; blue.L++;
+                } else if (r.redScore < r.blueScore) {
+                    blue.W++; red.L++;
+                } else {
+                    red.D++; blue.D++;
+                }
+            });
+
+            const rows = Object.values(stats).map(s => ({
+                ...s,
+                GD: s.GF - s.GA,
+                PTS: s.W * 3 + s.D
+            }));
+
+            rows.sort((a, b) => b.PTS - a.PTS || b.GD - a.GD || b.GF - a.GF);
+
+            const body = document.getElementById('standings-body');
+            body.innerHTML = '';
+            rows.forEach((s, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${s.team.name}</td>
+          <td>${s.P}</td>
+          <td>${s.W}</td>
+          <td>${s.D}</td>
+          <td>${s.L}</td>
+          <td>${s.GD}</td>
+          <td>${s.PTS}</td>
+        `;
+                body.appendChild(tr);
+            });
+        }
+
+        function autoAssignPairings() {
+            const activeTeams = teams.filter(t => t.enabled);
+            const activeSims = simulators.filter(s => s.enabled);
+
+            const existing = new Set(results.map(r => `${r.redId}:${r.blueId}`));
+
+            const neededPairs = [];
+            for (let i = 0; i < activeTeams.length; i++) {
+                for (let j = i + 1; j < activeTeams.length; j++) {
+                    const a = activeTeams[i].id;
+                    const b = activeTeams[j].id;
+                    if (!existing.has(`${a}:${b}`)) neededPairs.push({ redId: a, blueId: b });
+                    if (!existing.has(`${b}:${a}`)) neededPairs.push({ redId: b, blueId: a });
+                }
+            }
+
+            games = [];
+            let simIdx = 0;
+            neededPairs.forEach(p => {
+                if (!activeSims.length) return;
+                const sim = activeSims[simIdx % activeSims.length];
+                games.push({ simId: sim.id, redId: p.redId, blueId: p.blueId, state: 'ready' });
+                simIdx++;
+            });
+
+            renderGames();
+        }
+
+        function markGamesStarted() {
+            games.forEach(g => g.state = 'running');
+            simulators.forEach(s => { if (s.enabled) s.status = 'running'; });
+            renderSimulators();
+            renderGames();
+        }
+
+        function markGamesPaused() {
+            games.forEach(g => {
+                if (g.state === 'running') g.state = 'paused';
+            });
+            simulators.forEach(s => { if (s.enabled) s.status = 'paused'; });
+            renderSimulators();
+            renderGames();
+        }
+
+        function markGamesFinishedWithDummyScores() {
+            // for demo, create dummy results
+            games.forEach(g => {
+                if (g.state === 'running' || g.state === 'paused' || g.state === 'ready') {
+                    g.state = 'stopped';
+                    results.push({
+                        id: Date.now() + Math.random(),
+                        simId: g.simId,
+                        redId: g.redId,
+                        blueId: g.blueId,
+                        redScore: Math.floor(Math.random() * 5),
+                        blueScore: Math.floor(Math.random() * 5)
+                    });
+                    hasUnsavedResults = true;
+                }
+            });
+            simulators.forEach(s => { if (s.enabled) s.status = 'ready'; });
+            renderSimulators();
+            renderGames();
+            renderResults();
+            updateUnsavedIndicator();
+        }
+
+        function resetAllSimulatorsForNewGame() {
+            games = [];
+            simulators.forEach(s => s.status = 'ready');
+            renderSimulators();
+            renderGames();
+        }
+
+        function performHardReset() {
+            games = [];
+            results = [];
+            hasUnsavedResults = false;
+            simulators.forEach(s => { s.status = 'ready'; });
+            renderSimulators();
+            renderGames();
+            renderResults();
+            updateUnsavedIndicator();
+            // backend: fetch('/api/reset-all', { method: 'POST' });
+        }
+
+        // --- Event wiring -----------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            // Menu switching
+            document.querySelectorAll('#top-menu .menu-tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#top-menu .menu-tab').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(btn.dataset.target).classList.add('active');
+                });
+            });
+
+            // Simulators enable/disable
+            document.getElementById('simulators-body').addEventListener('change', (e) => {
+                if (!e.target.classList.contains('sim-enabled')) return;
+                const id = e.target.dataset.simId;
+                const sim = simulators.find(s => s.id === id);
+                if (sim) {
+                    sim.enabled = e.target.checked;
+                    // backend: fetch(`/api/simulators/${id}/enabled`, { method: 'POST', body: JSON.stringify({ enabled: sim.enabled }) });
+                }
+            });
+
+            // Teams enable/disable
+            document.getElementById('teams-body').addEventListener('change', (e) => {
+                if (!e.target.classList.contains('team-enabled')) return;
+                const id = e.target.dataset.teamId;
+                const team = teams.find(t => t.id === id);
+                if (team) {
+                    team.enabled = e.target.checked;
+                    // backend: fetch(`/api/teams/${id}/enabled`, { method: 'POST', body: JSON.stringify({ enabled: team.enabled }) });
+                }
+            });
+
+            // Auto assign pairings
+            document.getElementById('auto-assign-btn').addEventListener('click', () => {
+                autoAssignPairings();
+            });
+
+            // Start / pause / reset all
+            document.getElementById('start-all-btn').addEventListener('click', () => {
+                markGamesStarted();
+            });
+
+            document.getElementById('pause-all-btn').addEventListener('click', () => {
+                markGamesPaused();
+            });
+
+            document.getElementById('reset-all-btn').addEventListener('click', () => {
+                if (hasUnsavedResults) {
+                    const ok = confirm('Some games have been played and results were not stored yet. Reset all anyway?');
+                    if (!ok) return;
+                }
+                performHardReset();
+            });
+
+            // Store results and reset simulators for new game
+            document.getElementById('store-results-btn').addEventListener('click', () => {
+                if (!hasUnsavedResults || !areAllGamesStopped()) return;
+                // backend: fetch('/api/results/store', { method: 'POST', body: JSON.stringify({ results }) });
+                hasUnsavedResults = false;
+                updateUnsavedIndicator();
+                resetAllSimulatorsForNewGame();
+            });
+
+            // Add team dialog
+            const addDialog = document.getElementById('add-team-dialog');
+            document.getElementById('add-team-open-btn').addEventListener('click', () => {
+                addDialog.style.display = 'flex';
+            });
+            document.getElementById('add-team-cancel-btn').addEventListener('click', () => {
+                addDialog.style.display = 'none';
+            });
+            document.getElementById('add-team-save-btn').addEventListener('click', () => {
+                const id = document.getElementById('team-id-input').value.trim();
+                const name = document.getElementById('team-name-input').value.trim();
+                const port = parseInt(document.getElementById('team-port-input').value, 10);
+                if (!id || !name || !port) {
+                    alert('All fields are required.');
+                    return;
+                }
+                teams.push({ id, name, port, enabled: true });
+                renderTeams();
+                renderStandings();
+                addDialog.style.display = 'none';
+                document.getElementById('team-id-input').value = '';
+                document.getElementById('team-name-input').value = '';
+                document.getElementById('team-port-input').value = '';
+                // backend: POST /api/teams
+            });
+
+            // Clear results
+            document.getElementById('clear-results-btn').addEventListener('click', () => {
+                if (!results.length) return;
+                const ok = confirm('Clear all stored results?');
+                if (!ok) return;
+                results = [];
+                hasUnsavedResults = false;
+                renderResults();
+                updateUnsavedIndicator();
+            });
+
+            // Edit result dialog open
+            document.getElementById('results-body').addEventListener('click', (e) => {
+                if (!e.target.classList.contains('btn-edit-result')) return;
+                editResultIndex = parseInt(e.target.dataset.index, 10);
+                const r = results[editResultIndex];
+                document.getElementById('edit-red-score').value = r.redScore;
+                document.getElementById('edit-blue-score').value = r.blueScore;
+                document.getElementById('edit-result-dialog').style.display = 'flex';
+            });
+
+            // Edit result dialog actions
+            document.getElementById('edit-result-cancel-btn').addEventListener('click', () => {
+                document.getElementById('edit-result-dialog').style.display = 'none';
+            });
+
+            document.getElementById('edit-result-save-btn').addEventListener('click', () => {
+                if (editResultIndex == null) return;
+                const redScore = parseInt(document.getElementById('edit-red-score').value, 10) || 0;
+                const blueScore = parseInt(document.getElementById('edit-blue-score').value, 10) || 0;
+                results[editResultIndex].redScore = redScore;
+                results[editResultIndex].blueScore = blueScore;
+                hasUnsavedResults = true;
+                renderResults();
+                updateUnsavedIndicator();
+                document.getElementById('edit-result-dialog').style.display = 'none';
+            });
+
+            // Initial render
+            renderSimulators();
+            renderTeams();
+            renderGames();
+            renderResults();
+            updateUnsavedIndicator();
+
+            // For demo: simulate finishing games and creating results
+            // In real wiring, call markGamesFinishedWithDummyScores() when games actually end.
+            // setTimeout(markGamesFinishedWithDummyScores, 15000);
+        });
+    </script>
+</body>
+
+</html>
