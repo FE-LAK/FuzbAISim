@@ -410,6 +410,7 @@
             <button class="nav-tab" onclick="showView('debug')">Debug</button>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="/teams" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; padding: 6px 12px; border: 1px solid var(--card-border); border-radius: 8px; transition: all 0.2s;">Ekipe</a>
             <a href="/tournament" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; padding: 6px 12px; border: 1px solid var(--card-border); border-radius: 8px; transition: all 0.2s;">Turnir</a>
             <a href="/viz-control" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; padding: 6px 12px; border: 1px solid var(--card-border); border-radius: 8px; transition: all 0.2s;">Vizualizacija</a>
             <button class="btn" onclick="saveConfig()">Save Config</button>
@@ -583,6 +584,10 @@
                 <label>Opis algoritma</label>
                 <textarea id="add-team-algo" rows="3" style="width:100%; background:var(--card-bg); color:var(--text); border:1px solid var(--card-border); border-radius:8px; padding:8px; font-family:inherit; resize:vertical;"></textarea>
             </div>
+            <div class="input-group">
+                <label>Člani ekipe (ločeni z vejico, max 3)</label>
+                <input type="text" id="add-team-members" placeholder="Janez Novak, Ana Horvat">
+            </div>
             <div style="display: flex; gap: 10px; margin-top: 30px;">
                 <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="submitAddTeam()">Add Team</button>
                 <button class="btn" style="flex: 1; justify-content: center;" onclick="closeAddTeam()">Cancel</button>
@@ -718,7 +723,7 @@
                     editBtn.textContent = '✎';
                     card.querySelector('.btn-accent').parentElement.appendChild(editBtn);
                 }
-                editBtn.onclick = () => editTeamDetails(t.id, t.name, t.picture_url || '', t.algorithm_description || '');
+                editBtn.onclick = () => editTeamDetails(t.id, t.name, t.picture_url || '', t.algorithm_description || '', t.members || []);
             });
 
             // Remove cards for teams that no longer exist
@@ -1013,12 +1018,15 @@
             document.getElementById('add-team-modal').style.display = 'none';
         }
 
-        async function editTeamDetails(teamId, teamName, pictureUrl, algoDesc) {
+        async function editTeamDetails(teamId, teamName, pictureUrl, algoDesc, members) {
             const newPic = prompt(`Slika URL za "${teamName}":`, pictureUrl);
             if (newPic === null) return;
             const newAlgo = prompt(`Opis algoritma za "${teamName}":`, algoDesc);
             if (newAlgo === null) return;
-            await api(`/api/teams/${teamId}/details?picture_url=${encodeURIComponent(newPic)}&algorithm_description=${encodeURIComponent(newAlgo)}`, 'PUT');
+            const newMembers = prompt(`Člani ekipe (ločeni z vejico, max 3) za "${teamName}":`, (members || []).join(', '));
+            if (newMembers === null) return;
+            const membersList = newMembers.split(',').map(m => m.trim()).filter(m => m).slice(0, 3);
+            await api(`/api/teams/${teamId}/details`, 'PUT', { picture_url: newPic, algorithm_description: newAlgo, members: membersList });
             refresh();
         }
 
@@ -1028,7 +1036,9 @@
             const port = parseInt(document.getElementById('add-team-port').value);
             const picture_url = document.getElementById('add-team-picture').value || '';
             const algorithm_description = document.getElementById('add-team-algo').value || '';
-            await api('/api/teams', 'POST', { id, name, proxy_port: port, picture_url, algorithm_description });
+            const membersStr = document.getElementById('add-team-members').value || '';
+            const members = membersStr.split(',').map(m => m.trim()).filter(m => m).slice(0, 3);
+            await api('/api/teams', 'POST', { id, name, proxy_port: port, picture_url, algorithm_description, members });
             closeAddTeam();
             refresh();
         }

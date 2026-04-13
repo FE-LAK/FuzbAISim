@@ -111,6 +111,7 @@ class Team(BaseModel):
     enabled: bool = True
     picture_url: str = ""
     algorithm_description: str = ""
+    members: List[str] = []
 
 class Simulator(BaseModel):
     id: int
@@ -285,9 +286,9 @@ async def get_teams():
 
 @app.get("/api/teams/details")
 async def get_teams_details():
-    """Public endpoint: returns team id, name, picture_url, algorithm_description."""
+    """Public endpoint: returns team id, name, picture_url, algorithm_description, members."""
     return [
-        {"id": tid, "name": t.name, "picture_url": t.picture_url, "algorithm_description": t.algorithm_description}
+        {"id": tid, "name": t.name, "picture_url": t.picture_url, "algorithm_description": t.algorithm_description, "members": t.members}
         for tid, t in teams.items()
     ]
 
@@ -310,12 +311,24 @@ async def remove_team(team_id: int):
     save_config()
     return {"status": "ok"}
 
+class TeamDetailsUpdate(BaseModel):
+    name: Optional[str] = None
+    picture_url: Optional[str] = None
+    algorithm_description: Optional[str] = None
+    members: Optional[List[str]] = None
+
 @app.put("/api/teams/{team_id}/details")
-async def update_team_details(team_id: int, picture_url: str = "", algorithm_description: str = ""):
+async def update_team_details(team_id: int, details: TeamDetailsUpdate):
     if team_id not in teams:
         raise HTTPException(status_code=404, detail="Team not found")
-    teams[team_id].picture_url = picture_url
-    teams[team_id].algorithm_description = algorithm_description
+    if details.name is not None:
+        teams[team_id].name = details.name
+    if details.picture_url is not None:
+        teams[team_id].picture_url = details.picture_url
+    if details.algorithm_description is not None:
+        teams[team_id].algorithm_description = details.algorithm_description
+    if details.members is not None:
+        teams[team_id].members = details.members[:3]  # max 3 members
     save_config()
     return {"status": "ok"}
 
@@ -1599,6 +1612,11 @@ async def serve_qualifications():
 @app.get("/tournament.html")
 async def serve_tournament():
     return FileResponse(os.path.join(WWW_DIR, "tournament.html"))
+
+@app.get("/teams")
+@app.get("/teams.html")
+async def serve_teams():
+    return FileResponse(os.path.join(WWW_DIR, "teams.html"))
 
 @app.get("/viz-control")
 @app.get("/viz-control.html")

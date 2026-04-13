@@ -833,6 +833,7 @@
     </div>
     <nav class="nav-links">
         <a href="/qualifications" class="nav-tab">Kvalifikacije</a>
+        <a href="/teams" class="nav-tab">Ekipe</a>
         <a href="/tournament" class="nav-tab active">Turnir</a>
         <a href="/viz-control" class="nav-tab">Vizualizacija</a>
     </nav>
@@ -857,6 +858,17 @@
                 ✓ Bracket potrjen
             </div>
             <div class="banner-actions" id="bannerActions"></div>
+        </div>
+    </div>
+
+    <!-- ===== CONFIRM PROMPT ===== -->
+    <div class="glass-card" id="confirmPrompt" style="display:none;border-color:rgba(52,211,153,0.3);background:linear-gradient(135deg, rgba(52,211,153,0.08), rgba(52,211,153,0.02));">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+                <div style="font-size:1.05rem;font-weight:700;color:var(--success);margin-bottom:6px;">⚡ Pari so pripravljeni — potrdite turnir za začetek</div>
+                <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.5;">Ko potrdite bracket, se turnir začne in prikažejo se možnosti za vnos rezultatov posameznih iger. Preden potrdite, lahko pare še urejate spodaj.</div>
+            </div>
+            <button class="btn btn-success btn-lg" onclick="confirmTournament()" style="white-space:nowrap;font-size:1rem;padding:14px 28px;">✓ Potrdi turnir in začni</button>
         </div>
     </div>
 
@@ -1167,6 +1179,15 @@ function renderStateBanner() {
     if (dot) { dot.className = `phase-dot${p.pulse ? ' pulsing' : ''}`; }
 
     confirmedNote.style.display = state.confirmed ? '' : 'none';
+
+    // Show prominent confirm prompt when pairs exist but tournament not confirmed
+    const confirmPrompt = document.getElementById('confirmPrompt');
+    const hasPairs = state.prepData && state.prepData.pairs && state.prepData.pairs.length > 0;
+    if (state.phase === 'preparation' && !state.confirmed && hasPairs) {
+        confirmPrompt.style.display = '';
+    } else {
+        confirmPrompt.style.display = 'none';
+    }
 
     // Actions
     let html = '';

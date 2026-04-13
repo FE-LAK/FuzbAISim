@@ -255,7 +255,7 @@
 
         .bracket-header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .bracket-header h1 {
@@ -268,94 +268,82 @@
         }
 
         .bracket-tree {
-            display: flex;
-            align-items: stretch;
-            justify-content: center;
-            gap: 0;
-            height: calc(100vh - 120px);
+            position: relative;
             width: 100%;
+            height: calc(100vh - 130px);
             overflow: hidden;
         }
 
-        .bracket-round {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            flex: 1;
-            min-width: 0;
-            padding: 0 6px;
-            position: relative;
-        }
-
-        .round-label {
+        /* ── Single match card ── */
+        .bp {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-family: 'Outfit', sans-serif;
-            font-size: clamp(0.65rem, 1vw, 1rem);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--primary);
-            margin-bottom: 8px;
-        }
-
-        .bracket-pair {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
+            width: var(--bp-w, 220px);
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: var(--radius-md);
-            padding: 6px 8px;
+            padding: 5px 8px;
             backdrop-filter: blur(8px);
-            position: relative;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            margin: 4px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            transition: border-color 0.3s, box-shadow 0.3s, opacity 0.3s;
         }
 
-        .bracket-pair.active-match {
-            border-color: var(--primary);
-            box-shadow: 0 0 20px var(--primary-glow), inset 0 0 20px hsla(255, 85%, 75%, 0.04);
-            animation: pair-pulse 2s ease-in-out infinite;
+        .bp.upcoming {
+            opacity: 0.35;
         }
 
-        @keyframes pair-pulse {
-            0%, 100% { box-shadow: 0 0 20px var(--primary-glow); }
-            50%       { box-shadow: 0 0 35px hsla(255, 85%, 75%, 0.55); }
+        .bp.active-match {
+            border-color: hsl(45, 100%, 55%);
+            box-shadow: 0 0 22px hsla(45, 100%, 55%, 0.45), inset 0 0 18px hsla(45, 100%, 55%, 0.06);
+            opacity: 1;
+            animation: bp-pulse 2s ease-in-out infinite;
         }
 
-        .bracket-team {
+        @keyframes bp-pulse {
+            0%, 100% { box-shadow: 0 0 22px hsla(45, 100%, 55%, 0.45); }
+            50%       { box-shadow: 0 0 40px hsla(45, 100%, 55%, 0.7); }
+        }
+
+        .bp.completed {
+            opacity: 1;
+        }
+
+        .bp.bye-slot {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ── Team row inside a card ── */
+        .bt {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 4px;
+            gap: 5px;
+            padding: 3px 4px;
             border-radius: var(--radius-sm);
             transition: background 0.2s;
         }
 
-        .bracket-team.winner {
+        .bt.winner {
             background: var(--success-dim);
         }
 
-        .bracket-team.loser {
+        .bt.loser {
             opacity: 0.4;
         }
 
-        .team-seed {
+        .bt-seed {
             font-family: 'Outfit', sans-serif;
-            font-size: clamp(0.6rem, 0.85vw, 0.9rem);
+            font-size: clamp(0.55rem, 0.75vw, 0.85rem);
             font-weight: 700;
             color: var(--text-muted);
-            min-width: 20px;
+            min-width: 18px;
             text-align: right;
         }
 
-        .team-name-bracket {
+        .bt-name {
             font-family: 'Outfit', sans-serif;
-            font-size: clamp(0.65rem, 0.95vw, 1.05rem);
+            font-size: clamp(0.7rem, 1.05vw, 1.15rem);
             font-weight: 700;
             color: var(--text);
             flex: 1;
@@ -364,60 +352,78 @@
             white-space: nowrap;
         }
 
-        .bracket-team.winner .team-name-bracket {
-            color: var(--success);
-        }
+        .bt.winner .bt-name { color: var(--success); }
 
-        .team-score-bracket {
+        .bp.active-match .bt-name { color: hsl(45, 100%, 75%); }
+        .bp.active-match .bt.winner .bt-name { color: var(--success); }
+        .bp.active-match .bt.loser .bt-name { color: var(--text-muted); }
+
+        .bt-score {
             font-family: 'Outfit', sans-serif;
-            font-size: clamp(0.65rem, 0.95vw, 1.05rem);
+            font-size: clamp(0.7rem, 1vw, 1.1rem);
             font-weight: 800;
-            min-width: 22px;
+            min-width: 24px;
             text-align: right;
             color: var(--text-muted);
         }
 
-        .bracket-team.winner .team-score-bracket {
-            color: var(--success);
-        }
+        .bt.winner .bt-score { color: var(--success); }
 
-        .bracket-vs {
+        .bp-vs {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1px 0;
+            padding: 0;
         }
 
-        .bracket-vs-line {
+        .bp-vs-line {
             height: 1px;
             flex: 1;
             background: var(--card-border);
         }
 
-        .bracket-vs-text {
-            font-size: clamp(0.5rem, 0.7vw, 0.7rem);
+        .bp-vs-text {
+            font-size: clamp(0.45rem, 0.6vw, 0.65rem);
             color: var(--text-muted);
             opacity: 0.5;
             padding: 0 4px;
         }
 
-        /* Connector lines between rounds */
-        .bracket-connector {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            width: 18px;
-            position: relative;
+        /* ── Round labels (positioned absolute) ── */
+        .bracket-round-label {
+            position: absolute;
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.6rem, 0.95vw, 1rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary);
         }
 
-        /* Finals column layout */
-        .bracket-finals {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            flex: 1;
-            min-width: 0;
-            padding: 0 6px;
+        /* ── SVG connector lines ── */
+        .bracket-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .bracket-svg line {
+            stroke: hsla(215, 15%, 45%, 0.5);
+            stroke-width: 2;
+        }
+
+        .bracket-svg line.conn-winner {
+            stroke: var(--success);
+            stroke-width: 2.5;
+        }
+
+        .bracket-svg line.conn-active {
+            stroke: hsl(45, 100%, 55%);
+            stroke-width: 2.5;
         }
 
         /* ═══════════════════════════════════════════════════════════════════ */
@@ -492,6 +498,35 @@
             padding: 4px 14px;
         }
 
+        .match-team-photo {
+            width: clamp(60px, 8vw, 100px);
+            height: clamp(60px, 8vw, 100px);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: hsla(215, 15%, 65%, 0.08);
+            border: 1px solid var(--card-border);
+            flex-shrink: 0;
+        }
+
+        .match-team-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .match-team-photo .no-img {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            font-weight: 800;
+            color: var(--text-muted);
+            opacity: 0.4;
+        }
+
         .match-team-name {
             font-family: 'Outfit', sans-serif;
             font-size: clamp(2rem, 4.5vw, 5.5rem);
@@ -503,6 +538,18 @@
 
         .match-team.team-winner .match-team-name {
             color: var(--success);
+        }
+
+        .match-qual-advantage {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.85rem, 1.2vw, 1.3rem);
+            font-weight: 700;
+            color: var(--success);
+            display: none;
+        }
+
+        .match-qual-advantage.visible {
+            display: inline-block;
         }
 
         .match-games {
@@ -825,6 +872,14 @@
             word-break: break-word;
         }
 
+        .team-spotlight-members {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(1rem, 1.3vw, 1.4rem);
+            font-weight: 500;
+            color: var(--text-secondary, hsla(215, 15%, 75%, 0.85));
+            letter-spacing: 0.02em;
+        }
+
         .team-spotlight-algo {
             font-family: 'Inter', sans-serif;
             font-size: clamp(1rem, 1.4vw, 1.5rem);
@@ -952,6 +1007,14 @@
             color: var(--text);
             line-height: 1.05;
             word-break: break-word;
+        }
+
+        .teams-carousel-members {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(0.95rem, 1.3vw, 1.3rem);
+            font-weight: 500;
+            color: var(--text-secondary, hsla(215, 15%, 75%, 0.85));
+            letter-spacing: 0.02em;
         }
 
         .teams-carousel-divider {
@@ -1175,7 +1238,7 @@
     <!-- ─── VIEW 2: Bracket ─────────────────────────────────────────────── -->
     <div id="view-bracket" class="view">
         <div class="bracket-header">
-            <h1>Turnirska lestvica</h1>
+            <h1>FuzbAI &mdash; Potek tekmovanja</h1>
         </div>
         <div class="bracket-tree" id="bracket-tree">
             <div class="placeholder-text">Nalagam...</div>
@@ -1189,8 +1252,10 @@
             <div class="match-teams">
                 <!-- Team 1 -->
                 <div class="match-team team-left" id="match-team1">
+                    <div class="match-team-photo" id="match-photo1"><span class="no-img">?</span></div>
                     <div class="match-seed-badge" id="match-seed1">#1</div>
                     <div class="match-team-name" id="match-name1">Ekipa 1</div>
+                    <div class="match-qual-advantage" id="match-adv1"></div>
                     <div class="match-games" id="match-games1">
                         <div class="match-game-row">
                             <span class="match-game-label">Igra 1</span>
@@ -1218,8 +1283,10 @@
 
                 <!-- Team 2 -->
                 <div class="match-team team-right" id="match-team2">
+                    <div class="match-team-photo" id="match-photo2"><span class="no-img">?</span></div>
                     <div class="match-seed-badge" id="match-seed2">#2</div>
                     <div class="match-team-name" id="match-name2">Ekipa 2</div>
+                    <div class="match-qual-advantage" id="match-adv2"></div>
                     <div class="match-games" id="match-games2">
                         <div class="match-game-row">
                             <span class="match-game-label">Igra 1</span>
@@ -1269,6 +1336,7 @@
                 <div class="team-spotlight-main">
                     <div class="team-spotlight-label">Ekipa</div>
                     <div class="team-spotlight-name" id="team-name">—</div>
+                    <div class="team-spotlight-members" id="team-members"></div>
                     <div class="team-spotlight-algo" id="team-algo"></div>
                 </div>
             </div>
@@ -1338,10 +1406,10 @@
     // View switching
     // ─────────────────────────────────────────────────────────────────────────
     function switchView(viewName) {
-        if (currentView === viewName) return;
+        const changed = currentView !== viewName;
 
         // Stop teams carousel when leaving 'teams' view
-        if (currentView === 'teams') {
+        if (changed && currentView === 'teams') {
             stopTeamsCarousel();
         }
 
@@ -1356,6 +1424,16 @@
             const title = document.getElementById('view-title');
             if (title) title.classList.add('active');
             currentView = 'title';
+        }
+
+        // Trigger render when switching to a view
+        if (changed) {
+            if (viewName === 'bracket') renderBracket();
+            else if (viewName === 'standings') renderStandings();
+            else if (viewName === 'match') renderMatch(vizState.match_id, vizState.round_name);
+            else if (viewName === 'team') renderTeam(vizState.team_id);
+            else if (viewName === 'teams') renderTeamsPresentation();
+            else if (viewName === 'matrix') renderMatrix();
         }
     }
 
@@ -1479,135 +1557,256 @@
         const container = document.getElementById('bracket-tree');
 
         if (!bracketData || !bracketData.bracket) {
-            container.innerHTML = '<div class="placeholder-text">Turnir še ni začet</div>';
+            container.innerHTML = '<div class="placeholder-text">Turnir \u0161e ni za\u010det</div>';
             return;
         }
 
         const bracket = bracketData.bracket;
-        // Build dynamic round order from API response, or from bracket keys
-        let roundOrder;
-        if (bracketData.round_names) {
-            roundOrder = bracketData.round_names.filter(r => r !== 'third_place' && r !== 'final');
-            // Add 'final' at the end of main flow (not third_place)
-            if (bracketData.round_names.includes('final')) roundOrder.push('final');
-        } else {
-            roundOrder = Object.keys(bracket).filter(r => r !== 'third_place');
-        }
-        const roundsFinal = ['third_place', 'final'];
+        const W = container.clientWidth;
+        const H = container.clientHeight;
+        if (W === 0 || H === 0) return; // not visible yet
 
-        // Collect active pairs
+        // --- Determine bracket structure ---
+        // Expected rounds for 8-team: quarter_final -> semi_final -> final (+ third_place)
+        const roundNames = bracketData.round_names || Object.keys(bracket);
+        // Main flow rounds (excluding third_place)
+        const mainRounds = roundNames.filter(r => r !== 'third_place');
+        // Expected slot counts per round
+        const roundMatchCounts = bracketData.round_match_counts || {};
+
+        // Collect active pairs (pairs that have at least one game with status 'active')
         const activePairs = new Set();
-        if (bracketData.state && bracketData.state.active_pairs) {
-            bracketData.state.active_pairs.forEach(id => activePairs.add(id));
+        for (const rKey of Object.keys(bracket)) {
+            const round = bracket[rKey];
+            if (!round.pairs) continue;
+            for (const p of round.pairs) {
+                if (p.games && p.games.some(g => g.status === 'active')) {
+                    activePairs.add(p.id);
+                }
+            }
         }
 
-        let html = '';
+        // --- Layout computation ---
+        // Columns: one per main round + third_place if present
+        // Vertical slots: first round has most, each subsequent round halves
+        const firstRound = mainRounds[0];
+        const firstRoundSlots = roundMatchCounts[firstRound] || (bracket[firstRound] ? bracket[firstRound].pairs.length : 4);
+        const numCols = mainRounds.length;
+        const hasThird = roundNames.includes('third_place');
 
-        // Main rounds
-        const mainRounds = roundOrder.filter(r => bracket[r] && bracket[r].pairs && bracket[r].pairs.length > 0);
+        // Card sizing
+        const CARD_H = 56;
+        const LABEL_H = 28;
+        const GAP = 16; // horizontal gap for connectors
 
-        mainRounds.forEach(roundKey => {
-            const round = bracket[roundKey];
-            const label = ROUND_NAMES[roundKey] || roundKey;
-            // Filter out BYE pairs
-            const realPairs = (round.pairs || []).filter(p => p.team1_name !== 'BYE' && p.team2_name !== 'BYE');
-            if (realPairs.length === 0) return;  // Skip empty rounds after BYE filtering
+        // Compute column widths and positions
+        const colW = Math.min(240, (W - (numCols - 1) * GAP) / numCols);
 
-            html += `<div class="bracket-round">
-                <div class="round-label">${label}</div>`;
+        // For 3rd place, we position it below the final
+        // Columns layout with even spacing
+        const totalGridW = numCols * colW + (numCols - 1) * GAP;
+        const offsetX = (W - totalGridW) / 2;
 
-            realPairs.forEach(pair => {
-                const isActive = activePairs.has(pair.id);
-                const pairCls = isActive ? 'bracket-pair active-match' : 'bracket-pair';
+        function colX(col) { return offsetX + col * (colW + GAP); }
 
-                const t1pts = pair.duel_score ? pair.duel_score.team1_total_points : null;
-                const t2pts = pair.duel_score ? pair.duel_score.team2_total_points : null;
-                const hasWinner = !!pair.winner_id;
-                const t1win = hasWinner && pair.winner_id === pair.team1_id;
-                const t2win = hasWinner && pair.winner_id === pair.team2_id;
+        // Build a slot map: for each round, compute vertical center positions
+        // First round: evenly distributed
+        const usableH = H - LABEL_H - 20; // reserve top for labels and bottom margin
+        const topPad = LABEL_H + 10;
 
-                const t1cls = hasWinner ? (t1win ? 'bracket-team winner' : 'bracket-team loser') : 'bracket-team';
-                const t2cls = hasWinner ? (t2win ? 'bracket-team winner' : 'bracket-team loser') : 'bracket-team';
+        // Compute positions for all slots in all rounds
+        const slotPositions = []; // slotPositions[colIdx] = [{ cy, pair, isBye }]
+        const allCards = []; // { col, x, y, w, h, pair, isBye, isUpcoming, isActive, roundKey }
+        const connectorLines = []; // { x1, y1, x2, y2, cssClass }
 
-                const t1name = pair.team1_name || '?';
-                const t2name = pair.team2_name || '?';
-                const t1seed = pair.team1_seed ? `#${pair.team1_seed}` : '';
-                const t2seed = pair.team2_seed ? `#${pair.team2_seed}` : '';
-                const t1score = t1pts !== null ? formatNum(t1pts) : '—';
-                const t2score = t2pts !== null ? formatNum(t2pts) : '—';
+        mainRounds.forEach((roundKey, colIdx) => {
+            const expectedSlots = roundMatchCounts[roundKey] || 0;
+            const pairs = (bracket[roundKey] && bracket[roundKey].pairs) || [];
 
-                html += `<div class="${pairCls}">
-                    <div class="${t1cls}">
-                        <span class="team-seed">${t1seed}</span>
-                        <span class="team-name-bracket">${esc(t1name)}</span>
-                        <span class="team-score-bracket">${t1score}</span>
-                    </div>
-                    <div class="bracket-vs">
-                        <div class="bracket-vs-line"></div>
-                        <span class="bracket-vs-text">vs</span>
-                        <div class="bracket-vs-line"></div>
-                    </div>
-                    <div class="${t2cls}">
-                        <span class="team-seed">${t2seed}</span>
-                        <span class="team-name-bracket">${esc(t2name)}</span>
-                        <span class="team-score-bracket">${t2score}</span>
-                    </div>
-                </div>`;
-            });
+            // Build slot array matching expected count
+            const slots = [];
+            for (let si = 0; si < Math.max(expectedSlots, pairs.length); si++) {
+                const pair = pairs.find(p => p.match_index === si) || pairs[si] || null;
+                const isBye = pair && (pair.team1_name === 'BYE' || pair.team2_name === 'BYE');
+                slots.push({ pair, isBye: !!isBye });
+            }
 
-            html += `</div>`; // bracket-round
-        });
+            // Vertical distribution: center each slot
+            const n = slots.length || 1;
+            const slotSpacing = usableH / n;
+            const positions = [];
 
-        // Finals column (3rd place + final side by side)
-        const hasFinals = roundsFinal.some(r => bracket[r] && bracket[r].pairs && bracket[r].pairs.length > 0);
-        if (hasFinals) {
-            html += `<div class="bracket-round">
-                <div class="round-label">Zaključek</div>`;
+            slots.forEach((slot, i) => {
+                const cy = topPad + slotSpacing * i + slotSpacing / 2;
+                positions.push({ cy, ...slot });
 
-            roundsFinal.forEach(roundKey => {
-                if (!bracket[roundKey] || !bracket[roundKey].pairs || !bracket[roundKey].pairs.length) return;
-                const round = bracket[roundKey];
-                const label = ROUND_NAMES[roundKey] || roundKey;
+                const x = colX(colIdx);
+                const y = cy - CARD_H / 2;
 
-                round.pairs.forEach(pair => {
-                    const isActive = activePairs.has(pair.id);
-                    const pairCls = isActive ? 'bracket-pair active-match' : 'bracket-pair';
-                    const t1pts = pair.duel_score ? pair.duel_score.team1_total_points : null;
-                    const t2pts = pair.duel_score ? pair.duel_score.team2_total_points : null;
-                    const hasWinner = !!pair.winner_id;
-                    const t1win = hasWinner && pair.winner_id === pair.team1_id;
-                    const t2win = hasWinner && pair.winner_id === pair.team2_id;
-                    const t1cls = hasWinner ? (t1win ? 'bracket-team winner' : 'bracket-team loser') : 'bracket-team';
-                    const t2cls = hasWinner ? (t2win ? 'bracket-team winner' : 'bracket-team loser') : 'bracket-team';
-                    const t1name = pair.team1_name || '?';
-                    const t2name = pair.team2_name || '?';
-                    const t1seed = pair.team1_seed ? `#${pair.team1_seed}` : '';
-                    const t2seed = pair.team2_seed ? `#${pair.team2_seed}` : '';
-                    const t1score = t1pts !== null ? formatNum(t1pts) : '—';
-                    const t2score = t2pts !== null ? formatNum(t2pts) : '—';
-
-                    html += `<div style="margin-bottom:6px; font-size:clamp(0.6rem,0.8vw,0.85rem); color:var(--primary); font-family:'Outfit',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; text-align:center;">${label}</div>
-                    <div class="${pairCls}" style="margin-bottom: 12px;">
-                        <div class="${t1cls}">
-                            <span class="team-seed">${t1seed}</span>
-                            <span class="team-name-bracket">${esc(t1name)}</span>
-                            <span class="team-score-bracket">${t1score}</span>
-                        </div>
-                        <div class="bracket-vs">
-                            <div class="bracket-vs-line"></div>
-                            <span class="bracket-vs-text">vs</span>
-                            <div class="bracket-vs-line"></div>
-                        </div>
-                        <div class="${t2cls}">
-                            <span class="team-seed">${t2seed}</span>
-                            <span class="team-name-bracket">${esc(t2name)}</span>
-                            <span class="team-score-bracket">${t2score}</span>
-                        </div>
-                    </div>`;
+                allCards.push({
+                    col: colIdx, x, y, w: colW, h: CARD_H,
+                    pair: slot.pair, isBye: slot.isBye,
+                    isUpcoming: slot.pair && !slot.pair.winner_id && !activePairs.has(slot.pair?.id),
+                    isActive: slot.pair && activePairs.has(slot.pair.id),
+                    roundKey,
+                    slotIdx: i,
+                    cy,
                 });
             });
 
-            html += `</div>`;
+            slotPositions.push(positions);
+        });
+
+        // --- Connector lines ---
+        for (let colIdx = 0; colIdx < slotPositions.length - 1; colIdx++) {
+            const curSlots = slotPositions[colIdx];
+            const nextSlots = slotPositions[colIdx + 1];
+            const curRound = mainRounds[colIdx];
+            const nextRound = mainRounds[colIdx + 1];
+
+            // Each pair of consecutive slots in current round feeds into one slot in next round
+            for (let ni = 0; ni < nextSlots.length; ni++) {
+                const topSlotIdx = ni * 2;
+                const botSlotIdx = ni * 2 + 1;
+                const topSlot = curSlots[topSlotIdx];
+                const botSlot = curSlots[botSlotIdx];
+                const nextSlot = nextSlots[ni];
+
+                if (!nextSlot) continue;
+
+                const rightX = colX(colIdx) + colW;
+                const leftX = colX(colIdx + 1);
+                const midX = (rightX + leftX) / 2;
+
+                // Determine connector style
+                function getConnClass(slot) {
+                    if (!slot || !slot.pair) return '';
+                    if (slot.pair.winner_id) return 'conn-winner';
+                    if (activePairs.has(slot.pair.id)) return 'conn-active';
+                    return '';
+                }
+
+                if (topSlot) {
+                    const cls = getConnClass(topSlot);
+                    // horizontal from top slot to mid
+                    connectorLines.push({ x1: rightX, y1: topSlot.cy, x2: midX, y2: topSlot.cy, cls });
+                    // vertical from top to mid-Y of next slot
+                    connectorLines.push({ x1: midX, y1: topSlot.cy, x2: midX, y2: nextSlot.cy, cls });
+                }
+                if (botSlot) {
+                    const cls = getConnClass(botSlot);
+                    // horizontal from bot slot to mid
+                    connectorLines.push({ x1: rightX, y1: botSlot.cy, x2: midX, y2: botSlot.cy, cls });
+                    // vertical from bot to mid-Y of next slot
+                    connectorLines.push({ x1: midX, y1: botSlot.cy, x2: midX, y2: nextSlot.cy, cls });
+                }
+
+                // horizontal from mid to next slot
+                if (topSlot || botSlot) {
+                    // Pick the "stronger" connector class
+                    let cls = '';
+                    const nextPair = nextSlot.pair;
+                    if (nextPair && nextPair.winner_id) cls = 'conn-winner';
+                    else if (nextPair && activePairs.has(nextPair.id)) cls = 'conn-active';
+                    else if ((topSlot && topSlot.pair && topSlot.pair.winner_id) || (botSlot && botSlot.pair && botSlot.pair.winner_id)) cls = 'conn-winner';
+                    connectorLines.push({ x1: midX, y1: nextSlot.cy, x2: leftX, y2: nextSlot.cy, cls });
+                }
+            }
+        }
+
+        // --- Third place card ---
+        let thirdCard = null;
+        if (hasThird && bracket['third_place'] && bracket['third_place'].pairs && bracket['third_place'].pairs.length > 0) {
+            const thirdPair = bracket['third_place'].pairs[0];
+            // Position: below the final, in the last column
+            const lastCol = numCols - 1;
+            const finalSlots = slotPositions[lastCol];
+            const finalCy = finalSlots.length > 0 ? finalSlots[finalSlots.length - 1].cy : H / 2;
+            const thirdY = finalCy + CARD_H / 2 + 40;
+            thirdCard = {
+                x: colX(lastCol),
+                y: thirdY,
+                w: colW,
+                h: CARD_H,
+                pair: thirdPair,
+                isBye: false,
+                isActive: activePairs.has(thirdPair.id),
+                isUpcoming: !thirdPair.winner_id && !activePairs.has(thirdPair.id),
+                roundKey: 'third_place',
+            };
+        }
+
+        // --- Render SVG ---
+        let svgLines = '';
+        connectorLines.forEach(ln => {
+            svgLines += `<line x1="${ln.x1}" y1="${ln.y1}" x2="${ln.x2}" y2="${ln.y2}" class="${ln.cls || ''}"/>`;
+        });
+
+        // --- Render HTML ---
+        function renderCard(card) {
+            const p = card.pair;
+            if (!p) {
+                // Empty placeholder for future round
+                return `<div class="bp upcoming" style="left:${card.x}px;top:${card.y}px;width:${card.w}px;height:${card.h}px;">
+                    <div class="bt"><span class="bt-name" style="color:var(--text-muted);opacity:0.5;">\u2014</span></div>
+                    <div class="bp-vs"><div class="bp-vs-line"></div><span class="bp-vs-text">vs</span><div class="bp-vs-line"></div></div>
+                    <div class="bt"><span class="bt-name" style="color:var(--text-muted);opacity:0.5;">\u2014</span></div>
+                </div>`;
+            }
+
+            const hasWinner = !!p.winner_id;
+            const t1win = hasWinner && p.winner_id === p.team1_id;
+            const t2win = hasWinner && p.winner_id === p.team2_id;
+
+            let cardCls = 'bp';
+            if (card.isBye) cardCls += ' bye-slot';
+            else if (card.isActive) cardCls += ' active-match';
+            else if (hasWinner) cardCls += ' completed';
+            else cardCls += ' upcoming';
+
+            const t1cls = hasWinner ? (t1win ? 'bt winner' : 'bt loser') : 'bt';
+            const t2cls = hasWinner ? (t2win ? 'bt winner' : 'bt loser') : 'bt';
+
+            const t1name = p.team1_name || '?';
+            const t2name = p.team2_name || '?';
+            const t1seed = p.team1_seed ? `#${p.team1_seed}` : '';
+            const t2seed = p.team2_seed ? `#${p.team2_seed}` : '';
+
+            const t1pts = p.duel_score ? p.duel_score.team1_total_points : null;
+            const t2pts = p.duel_score ? p.duel_score.team2_total_points : null;
+            const t1score = t1pts !== null ? formatNum(t1pts) : '';
+            const t2score = t2pts !== null ? formatNum(t2pts) : '';
+
+            return `<div class="${cardCls}" style="left:${card.x}px;top:${card.y}px;width:${card.w}px;height:${card.h}px;">
+                <div class="${t1cls}">
+                    <span class="bt-seed">${t1seed}</span>
+                    <span class="bt-name">${esc(t1name)}</span>
+                    <span class="bt-score">${t1score}</span>
+                </div>
+                <div class="bp-vs"><div class="bp-vs-line"></div><span class="bp-vs-text">vs</span><div class="bp-vs-line"></div></div>
+                <div class="${t2cls}">
+                    <span class="bt-seed">${t2seed}</span>
+                    <span class="bt-name">${esc(t2name)}</span>
+                    <span class="bt-score">${t2score}</span>
+                </div>
+            </div>`;
+        }
+
+        let html = `<svg class="bracket-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${svgLines}</svg>`;
+
+        // Round labels
+        mainRounds.forEach((roundKey, colIdx) => {
+            const label = ROUND_NAMES[roundKey] || roundKey;
+            html += `<div class="bracket-round-label" style="left:${colX(colIdx)}px;top:2px;width:${colW}px;">${label}</div>`;
+        });
+
+        // Cards
+        allCards.forEach(card => { html += renderCard(card); });
+
+        // Third place
+        if (thirdCard) {
+            html += `<div class="bracket-round-label" style="left:${thirdCard.x}px;top:${thirdCard.y - 20}px;width:${thirdCard.w}px;">Tekma za 3. mesto</div>`;
+            html += renderCard(thirdCard);
         }
 
         container.innerHTML = html;
@@ -1665,6 +1864,41 @@
         document.getElementById('match-name2').textContent = pair.team2_name || '—';
         document.getElementById('match-seed1').textContent = pair.team1_seed ? `#${pair.team1_seed}` : '—';
         document.getElementById('match-seed2').textContent = pair.team2_seed ? `#${pair.team2_seed}` : '—';
+
+        // Team photos
+        if (!teamsDetailData) await fetchTeamsDetail();
+        const detail1 = teamsDetailData && teamsDetailData.find(t => t.id === pair.team1_id);
+        const detail2 = teamsDetailData && teamsDetailData.find(t => t.id === pair.team2_id);
+        const photo1El = document.getElementById('match-photo1');
+        const photo2El = document.getElementById('match-photo2');
+        if (detail1 && detail1.picture_url) {
+            photo1El.innerHTML = `<img src="${esc(detail1.picture_url)}" alt="${esc(pair.team1_name)}" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'>${esc(pair.team1_name || '?').charAt(0)}</span>'">`;
+        } else {
+            photo1El.innerHTML = `<span class="no-img">${esc(pair.team1_name || '?').charAt(0)}</span>`;
+        }
+        if (detail2 && detail2.picture_url) {
+            photo2El.innerHTML = `<img src="${esc(detail2.picture_url)}" alt="${esc(pair.team2_name)}" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'>${esc(pair.team2_name || '?').charAt(0)}</span>'">`;
+        } else {
+            photo2El.innerHTML = `<span class="no-img">${esc(pair.team2_name || '?').charAt(0)}</span>`;
+        }
+
+        // Qualifying advantage
+        const adv1El = document.getElementById('match-adv1');
+        const adv2El = document.getElementById('match-adv2');
+        adv1El.classList.remove('visible');
+        adv2El.classList.remove('visible');
+        adv1El.textContent = '';
+        adv2El.textContent = '';
+        const ds0 = pair.duel_score || {};
+        const q1 = ds0.team1_qual_goals || 0;
+        const q2 = ds0.team2_qual_goals || 0;
+        if (q1 > q2) {
+            adv1El.textContent = `Prednost iz kvalifikacij: ${q1}:${q2}`;
+            adv1El.classList.add('visible');
+        } else if (q2 > q1) {
+            adv2El.textContent = `Prednost iz kvalifikacij: ${q2}:${q1}`;
+            adv2El.classList.add('visible');
+        }
 
         // Game scores
         const g1 = pair.games && pair.games.find(g => g.game_number === 1);
@@ -1729,6 +1963,12 @@
         document.getElementById('match-pts1').textContent = '0';
         document.getElementById('match-pts2').textContent = '0';
         document.getElementById('match-status').textContent = 'Čakam na podatke...';
+        document.getElementById('match-photo1').innerHTML = '<span class="no-img">?</span>';
+        document.getElementById('match-photo2').innerHTML = '<span class="no-img">?</span>';
+        const adv1 = document.getElementById('match-adv1');
+        const adv2 = document.getElementById('match-adv2');
+        adv1.classList.remove('visible'); adv1.textContent = '';
+        adv2.classList.remove('visible'); adv2.textContent = '';
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -1738,6 +1978,7 @@
         if (!teamId) {
             document.getElementById('team-name').textContent = '—';
             document.getElementById('team-algo').textContent = '';
+            document.getElementById('team-members').textContent = '';
             document.getElementById('team-photo').innerHTML = '<span class="no-img">?</span>';
             return;
         }
@@ -1749,6 +1990,7 @@
         if (!team) {
             document.getElementById('team-name').textContent = 'Neznana ekipa';
             document.getElementById('team-algo').textContent = '';
+            document.getElementById('team-members').textContent = '';
             document.getElementById('team-photo').innerHTML = '<span class="no-img">?</span>';
             return;
         }
@@ -1773,6 +2015,13 @@
             algoEl.textContent = detail.algorithm_description;
         } else {
             algoEl.textContent = '';
+        }
+
+        const membersEl = document.getElementById('team-members');
+        if (detail && detail.members && detail.members.length > 0) {
+            membersEl.textContent = detail.members.join(' \u00B7 ');
+        } else {
+            membersEl.textContent = '';
         }
 
         // Bracket info
@@ -1844,11 +2093,16 @@
             `<span class="dot${i === teamsCarouselIndex ? ' active' : ''}"></span>`
         ).join('');
 
+        const membersHtml = team.members && team.members.length > 0
+            ? `<div class="teams-carousel-members">${team.members.map(m => esc(m)).join(' &middot; ')}</div>`
+            : '';
+
         container.innerHTML = `
             <div class="teams-carousel-img">${imgHtml}</div>
             <div class="teams-carousel-info">
                 <div class="teams-carousel-label">Ekipa ${teamsCarouselIndex + 1} / ${teamsDetailData.length}</div>
                 <div class="teams-carousel-name">${esc(team.name)}</div>
+                ${membersHtml}
                 <div class="teams-carousel-divider"></div>
                 ${team.algorithm_description
                     ? `<div class="teams-carousel-algo">${esc(team.algorithm_description)}</div>`
@@ -1876,7 +2130,7 @@
         }
     }
 
-    async function renderTeamsPresentation() {
+    async function renderTeamsPresentation(dataOnly) {
         if (!teamsDetailData) await fetchTeamsDetail();
         const container = document.getElementById('teams-carousel');
 
@@ -1885,6 +2139,10 @@
             stopTeamsCarousel();
             return;
         }
+
+        // If dataOnly=true and carousel is already running, just refresh the data
+        // without resetting the slide or restarting the timer
+        if (dataOnly && teamsCarouselTimer) return;
 
         showTeamSlide(teamsCarouselIndex);
         startTeamsCarousel();
@@ -2006,7 +2264,7 @@
                     else if (currentView === 'match') renderMatch(vizState.match_id, vizState.round_name);
                     else if (currentView === 'team') renderTeam(vizState.team_id);
                     else if (currentView === 'standings') renderStandings();
-                    else if (currentView === 'teams') renderTeamsPresentation();
+                    else if (currentView === 'teams') renderTeamsPresentation(true);
                     else if (currentView === 'matrix') renderMatrix();
                 });
             } catch (err) {
@@ -2043,7 +2301,7 @@
         else if (currentView === 'match') renderMatch(vizState.match_id, vizState.round_name);
         else if (currentView === 'standings') renderStandings();
         else if (currentView === 'team') renderTeam(vizState.team_id);
-        else if (currentView === 'teams') renderTeamsPresentation();
+        else if (currentView === 'teams') renderTeamsPresentation(true);
         else if (currentView === 'matrix') renderMatrix();
     }, 5000);
 
