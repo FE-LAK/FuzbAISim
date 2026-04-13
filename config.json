@@ -5,40 +5,40 @@
             "name": "Team 1",
             "proxy_port": 24001,
             "enabled": true,
-            "picture_url": "",
-            "algorithm_description": ""
+            "picture_url": "https://picsum.photos/id/1/400/400",
+            "algorithm_description": "Na\u0161 algoritem temelji na globokem u\u010denju."
         },
         {
             "id": 2,
             "name": "Team 2",
             "proxy_port": 24002,
             "enabled": true,
-            "picture_url": "",
-            "algorithm_description": ""
+            "picture_url": "https://picsum.photos/id/2/400/400",
+            "algorithm_description": "Uporabljamo odlo\u010ditvena drevesa."
         },
         {
             "id": 3,
             "name": "Team 3",
             "proxy_port": 24003,
             "enabled": true,
-            "picture_url": "",
-            "algorithm_description": ""
+            "picture_url": "https://picsum.photos/id/3/400/400",
+            "algorithm_description": "Nevronske mre\u017ee in ra\u010dunalni\u0161ki vid."
         },
         {
             "id": 4,
             "name": "Team 4",
             "proxy_port": 24004,
             "enabled": true,
-            "picture_url": "",
-            "algorithm_description": ""
+            "picture_url": "https://picsum.photos/id/4/400/400",
+            "algorithm_description": "Klasi\u010den PID regulator."
         },
         {
             "id": 5,
             "name": "Team 5",
             "proxy_port": 24005,
             "enabled": false,
-            "picture_url": "",
-            "algorithm_description": ""
+            "picture_url": "https://picsum.photos/id/5/400/400",
+            "algorithm_description": "Mehka logika za krmiljenje."
         },
         {
             "id": 6,

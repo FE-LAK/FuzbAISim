@@ -848,13 +848,16 @@ async def generate_tournament_pairs(team_count: int = Query(default=8, ge=2)):
         raise HTTPException(status_code=400, detail="Tournament already confirmed")
 
     standings = compute_qualification_standings()
-    if len(standings) < team_count:
+    if len(standings) == 0:
         raise HTTPException(
             status_code=400,
-            detail=f"Need at least {team_count} teams, have {len(standings)}"
+            detail="No teams found in qualification standings"
         )
 
-    top_teams = standings[:team_count]
+    # If fewer teams than requested, use all available teams
+    actual_count = min(team_count, len(standings))
+    top_teams = standings[:actual_count]
+    team_count = actual_count
     bracket_size = next_power_of_2(team_count)  # e.g. 5→8, 8→8, 10→16
     first_round_name = get_first_round_name(team_count)
     num_byes = bracket_size - team_count  # top seeds get byes

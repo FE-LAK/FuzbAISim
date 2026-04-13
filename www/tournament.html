@@ -1083,7 +1083,7 @@ function toggleCollapsible(bodyId, chevronId) {
 // ===================================================================
 // LOAD DATA
 // ===================================================================
-async function loadAll() {
+async function loadAll(isManual) {
     setRefreshing(true);
     try {
         // Always load state + bracket + games in parallel
@@ -1125,7 +1125,7 @@ async function loadAll() {
             }
         }
 
-        renderAll();
+        renderAll(isManual);
     } catch (e) {
         showToast('Napaka pri nalaganju podatkov: ' + e.message, 'error');
     }
@@ -1135,9 +1135,12 @@ async function loadAll() {
 // ===================================================================
 // RENDER ALL
 // ===================================================================
-function renderAll() {
+function renderAll(force) {
     renderStateBanner();
-    renderPrepSection();
+    // Skip prep section re-render during periodic poll if a dropdown is focused
+    if (force || !document.activeElement || !document.activeElement.classList.contains('pairing-select')) {
+        renderPrepSection();
+    }
     renderBracket();
     renderGameManagement();
 }
@@ -1192,7 +1195,7 @@ async function generatePairs() {
         const result = await apiPost(`/api/tournament/generate-pairs?team_count=${teamCount}`);
         const byeMsg = result.byes > 0 ? ` (${result.byes} bye-jev)` : '';
         showToast(`Pari uspešno generirani: ${result.first_round_matches} tekem${byeMsg}`, 'success');
-        await loadAll();
+        await loadAll(true);
     } catch(e) {
         showToast('Napaka: ' + e.message, 'error');
     }
@@ -1203,7 +1206,7 @@ async function confirmTournament() {
         try {
             await apiPost('/api/tournament/confirm');
             showToast('Turnir potrjen! Začenjamo…', 'success');
-            await loadAll();
+            await loadAll(true);
         } catch(e) {
             showToast('Napaka: ' + e.message, 'error');
         }
@@ -1215,7 +1218,7 @@ async function resetTournament() {
         try {
             await apiPost('/api/tournament/reset');
             showToast('Turnir je bil ponastavljen.', 'info');
-            await loadAll();
+            await loadAll(true);
         } catch(e) {
             showToast('Napaka: ' + e.message, 'error');
         }
@@ -1667,7 +1670,7 @@ async function saveResult(gameId) {
             team2_score: parseInt(t2),
         });
         showToast('Rezultat shranjen.', 'success');
-        await loadAll();
+        await loadAll(true);
     } catch(e) {
         showToast('Napaka: ' + e.message, 'error');
     }
@@ -1687,7 +1690,7 @@ async function confirmResult(gameId) {
             }
             await apiPost(`/api/tournament/game/${gameId}/confirm`);
             showToast('Rezultat potrjen!', 'success');
-            await loadAll();
+            await loadAll(true);
         } catch(e) {
             showToast('Napaka: ' + e.message, 'error');
         }
@@ -1698,7 +1701,7 @@ async function setActive(gameId) {
     try {
         await apiPost(`/api/tournament/game/${gameId}/set-active`);
         showToast('Igra aktivirana.', 'info');
-        await loadAll();
+        await loadAll(true);
     } catch(e) {
         showToast('Napaka: ' + e.message, 'error');
     }

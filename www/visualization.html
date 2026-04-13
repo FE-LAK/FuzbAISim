@@ -754,15 +754,57 @@
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: var(--radius-xl);
-            padding: 60px 80px;
+            padding: 48px 64px;
             backdrop-filter: blur(16px);
             text-align: center;
-            max-width: 900px;
+            max-width: 1100px;
             width: 100%;
             box-shadow: 0 40px 80px hsla(225, 25%, 3%, 0.5), 0 0 60px var(--primary-glow);
             display: flex;
             flex-direction: column;
-            gap: 32px;
+            gap: 28px;
+        }
+
+        .team-spotlight-top {
+            display: flex;
+            align-items: center;
+            gap: 48px;
+            justify-content: center;
+        }
+
+        .team-spotlight-photo {
+            width: 200px;
+            height: 200px;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            flex-shrink: 0;
+            background: hsla(225, 20%, 20%, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--card-border);
+        }
+
+        .team-spotlight-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .team-spotlight-photo .no-img {
+            font-family: 'Outfit', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--text-muted);
+        }
+
+        .team-spotlight-main {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: left;
+            flex: 1;
+            min-width: 0;
         }
 
         .team-spotlight-label {
@@ -776,11 +818,20 @@
 
         .team-spotlight-name {
             font-family: 'Outfit', sans-serif;
-            font-size: clamp(3rem, 7vw, 8rem);
+            font-size: clamp(2.5rem, 5vw, 5rem);
             font-weight: 900;
             color: var(--text);
-            line-height: 1;
+            line-height: 1.05;
             word-break: break-word;
+        }
+
+        .team-spotlight-algo {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(1rem, 1.4vw, 1.5rem);
+            font-weight: 400;
+            color: var(--text-muted);
+            line-height: 1.5;
+            font-style: italic;
         }
 
         .team-spotlight-divider {
@@ -830,97 +881,122 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════════ */
-        /* VIEW 6 — TEAMS PRESENTATION                                          */
+        /* VIEW 6 — TEAMS PRESENTATION (single team, rotating)                  */
         /* ═══════════════════════════════════════════════════════════════════ */
         #view-teams {
-            padding: 28px 48px 24px;
-            overflow-y: auto;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
         }
 
-        .teams-header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-
-        .teams-header h1 {
-            font-size: clamp(2rem, 3.5vw, 4rem);
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .teams-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 24px;
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-
-        .team-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-xl);
-            backdrop-filter: blur(12px);
-            overflow: hidden;
-            transition: border-color 0.3s, box-shadow 0.3s;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .team-card:hover {
-            border-color: hsla(255, 85%, 75%, 0.3);
-            box-shadow: 0 0 30px var(--primary-glow);
-        }
-
-        .team-card-img {
-            width: 100%;
-            height: 220px;
-            object-fit: cover;
-            background: hsla(225, 25%, 10%, 0.5);
+        .teams-carousel {
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
+            max-width: 1100px;
+            gap: 48px;
+            position: relative;
         }
 
-        .team-card-img img {
+        .teams-carousel-img {
+            width: 380px;
+            height: 380px;
+            flex-shrink: 0;
+            border-radius: var(--radius-xl);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 40px 80px hsla(225, 25%, 3%, 0.5), 0 0 60px var(--primary-glow);
+        }
+
+        .teams-carousel-img img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .team-card-img .no-img {
+        .teams-carousel-img .no-img {
             font-family: 'Outfit', sans-serif;
-            font-size: 4rem;
+            font-size: 8rem;
             font-weight: 900;
             color: var(--primary);
-            opacity: 0.4;
+            opacity: 0.3;
         }
 
-        .team-card-body {
-            padding: 24px 28px;
+        .teams-carousel-info {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 20px;
+            min-width: 0;
         }
 
-        .team-card-name {
+        .teams-carousel-label {
             font-family: 'Outfit', sans-serif;
-            font-size: clamp(1.4rem, 2.2vw, 2rem);
-            font-weight: 800;
-            color: var(--text);
-            line-height: 1.2;
+            font-size: clamp(0.9rem, 1.3vw, 1.3rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
         }
 
-        .team-card-algo {
+        .teams-carousel-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(2.5rem, 5.5vw, 6rem);
+            font-weight: 900;
+            color: var(--text);
+            line-height: 1.05;
+            word-break: break-word;
+        }
+
+        .teams-carousel-divider {
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 2px;
+        }
+
+        .teams-carousel-algo {
             font-family: 'Inter', sans-serif;
-            font-size: clamp(0.85rem, 1.1vw, 1.05rem);
+            font-size: clamp(1rem, 1.4vw, 1.5rem);
             font-weight: 400;
             color: var(--text-muted);
             line-height: 1.6;
+            max-width: 600px;
+        }
+
+        .teams-carousel-dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .teams-carousel-dots .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: hsla(0, 0%, 100%, 0.15);
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .teams-carousel-dots .dot.active {
+            background: var(--primary);
+            transform: scale(1.3);
+        }
+
+        /* Slide-in animation */
+        .teams-carousel.slide-in {
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(60px); }
+            to   { opacity: 1; transform: translateX(0); }
         }
 
         /* ═══════════════════════════════════════════════════════════════════ */
@@ -1008,9 +1084,14 @@
             cursor: default;
         }
 
-        table.qual-matrix td .score-win {
+        table.qual-matrix td .score-red-win {
             font-weight: 900;
-            color: var(--success);
+            color: hsl(0, 85%, 65%);
+        }
+
+        table.qual-matrix td .score-blue-win {
+            font-weight: 900;
+            color: hsl(210, 85%, 65%);
         }
 
         table.qual-matrix td .score-loss {
@@ -1181,8 +1262,16 @@
     <!-- ─── VIEW 5: Team Spotlight ─────────────────────────────────────── -->
     <div id="view-team" class="view">
         <div class="team-spotlight-card">
-            <div class="team-spotlight-label">Ekipa</div>
-            <div class="team-spotlight-name" id="team-name">—</div>
+            <div class="team-spotlight-top">
+                <div class="team-spotlight-photo" id="team-photo">
+                    <span class="no-img">?</span>
+                </div>
+                <div class="team-spotlight-main">
+                    <div class="team-spotlight-label">Ekipa</div>
+                    <div class="team-spotlight-name" id="team-name">—</div>
+                    <div class="team-spotlight-algo" id="team-algo"></div>
+                </div>
+            </div>
             <div class="team-spotlight-divider"></div>
             <div class="team-stats-row" id="team-stats">
                 <div class="team-stat">
@@ -1204,10 +1293,7 @@
 
         <!-- ─── VIEW 6: Teams Presentation ────────────────────────────── -->
     <div id="view-teams" class="view">
-        <div class="teams-header">
-            <h1>Predstavitev ekip</h1>
-        </div>
-        <div class="teams-grid" id="teams-grid">
+        <div class="teams-carousel" id="teams-carousel">
             <div class="placeholder-text">Nalagam...</div>
         </div>
     </div>
@@ -1253,6 +1339,12 @@
     // ─────────────────────────────────────────────────────────────────────────
     function switchView(viewName) {
         if (currentView === viewName) return;
+
+        // Stop teams carousel when leaving 'teams' view
+        if (currentView === 'teams') {
+            stopTeamsCarousel();
+        }
+
         const views = document.querySelectorAll('.view');
         views.forEach(v => v.classList.remove('active'));
         const next = document.getElementById('view-' + viewName);
@@ -1645,14 +1737,19 @@
     async function renderTeam(teamId) {
         if (!teamId) {
             document.getElementById('team-name').textContent = '—';
+            document.getElementById('team-algo').textContent = '';
+            document.getElementById('team-photo').innerHTML = '<span class="no-img">?</span>';
             return;
         }
 
         if (!standingsData) await fetchStandings();
+        if (!teamsDetailData) await fetchTeamsDetail();
 
         const team = standingsData && standingsData.find(t => t.id === teamId);
         if (!team) {
             document.getElementById('team-name').textContent = 'Neznana ekipa';
+            document.getElementById('team-algo').textContent = '';
+            document.getElementById('team-photo').innerHTML = '<span class="no-img">?</span>';
             return;
         }
 
@@ -1660,6 +1757,23 @@
         document.getElementById('team-rank').textContent = team.rank ? `${team.rank}.` : '—';
         document.getElementById('team-pts').textContent = formatNum(team.pts);
         document.getElementById('team-goals').textContent = `${formatNum(team.goals_for)} / ${formatNum(team.goals_against)}`;
+
+        // Picture & algorithm description from teamsDetailData
+        const detail = teamsDetailData && teamsDetailData.find(t => t.id === teamId);
+        const photoEl = document.getElementById('team-photo');
+        const algoEl = document.getElementById('team-algo');
+
+        if (detail && detail.picture_url) {
+            photoEl.innerHTML = `<img src="${esc(detail.picture_url)}" alt="${esc(team.name)}" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'>${esc(team.name).charAt(0)}</span>'">`;
+        } else {
+            photoEl.innerHTML = `<span class="no-img">${esc(team.name).charAt(0)}</span>`;
+        }
+
+        if (detail && detail.algorithm_description) {
+            algoEl.textContent = detail.algorithm_description;
+        } else {
+            algoEl.textContent = '';
+        }
 
         // Bracket info
         const bracketInfoEl = document.getElementById('team-bracket-info');
@@ -1710,35 +1824,70 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // RENDER: Teams Presentation
+    // RENDER: Teams Presentation (carousel — one team at a time)
     // ─────────────────────────────────────────────────────────────────────────
+    let teamsCarouselIndex = 0;
+    let teamsCarouselTimer = null;
+    const TEAMS_CAROUSEL_INTERVAL = 6000; // 6 seconds per team
+
+    function showTeamSlide(index) {
+        if (!teamsDetailData || teamsDetailData.length === 0) return;
+        teamsCarouselIndex = index % teamsDetailData.length;
+        const team = teamsDetailData[teamsCarouselIndex];
+        const container = document.getElementById('teams-carousel');
+
+        const imgHtml = team.picture_url
+            ? `<img src="${esc(team.picture_url)}" alt="${esc(team.name)}" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'>${esc(team.name).charAt(0)}</span>'">`
+            : `<span class="no-img">${esc(team.name).charAt(0)}</span>`;
+
+        const dots = teamsDetailData.map((_, i) =>
+            `<span class="dot${i === teamsCarouselIndex ? ' active' : ''}"></span>`
+        ).join('');
+
+        container.innerHTML = `
+            <div class="teams-carousel-img">${imgHtml}</div>
+            <div class="teams-carousel-info">
+                <div class="teams-carousel-label">Ekipa ${teamsCarouselIndex + 1} / ${teamsDetailData.length}</div>
+                <div class="teams-carousel-name">${esc(team.name)}</div>
+                <div class="teams-carousel-divider"></div>
+                ${team.algorithm_description
+                    ? `<div class="teams-carousel-algo">${esc(team.algorithm_description)}</div>`
+                    : ''}
+                <div class="teams-carousel-dots">${dots}</div>
+            </div>`;
+
+        // Trigger slide-in animation
+        container.classList.remove('slide-in');
+        void container.offsetWidth; // reflow
+        container.classList.add('slide-in');
+    }
+
+    function startTeamsCarousel() {
+        stopTeamsCarousel();
+        teamsCarouselTimer = setInterval(() => {
+            showTeamSlide(teamsCarouselIndex + 1);
+        }, TEAMS_CAROUSEL_INTERVAL);
+    }
+
+    function stopTeamsCarousel() {
+        if (teamsCarouselTimer) {
+            clearInterval(teamsCarouselTimer);
+            teamsCarouselTimer = null;
+        }
+    }
+
     async function renderTeamsPresentation() {
         if (!teamsDetailData) await fetchTeamsDetail();
-        const grid = document.getElementById('teams-grid');
+        const container = document.getElementById('teams-carousel');
 
         if (!teamsDetailData || teamsDetailData.length === 0) {
-            grid.innerHTML = '<div class="placeholder-text">Ni ekip</div>';
+            container.innerHTML = '<div class="placeholder-text">Ni ekip</div>';
+            stopTeamsCarousel();
             return;
         }
 
-        let html = '';
-        teamsDetailData.forEach(team => {
-            const imgHtml = team.picture_url
-                ? `<img src="${esc(team.picture_url)}" alt="${esc(team.name)}" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'>${esc(team.name).charAt(0)}</span>'">`
-                : `<span class="no-img">${esc(team.name).charAt(0)}</span>`;
-
-            html += `<div class="team-card">
-                <div class="team-card-img">${imgHtml}</div>
-                <div class="team-card-body">
-                    <div class="team-card-name">${esc(team.name)}</div>
-                    ${team.algorithm_description
-                        ? `<div class="team-card-algo">${esc(team.algorithm_description)}</div>`
-                        : ''}
-                </div>
-            </div>`;
-        });
-
-        grid.innerHTML = html;
+        showTeamSlide(teamsCarouselIndex);
+        startTeamsCarousel();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -1789,11 +1938,13 @@
                     if (match) {
                         const sr = match.score_red;
                         const sb = match.score_blue;
-                        let winClass, scoreHtml;
+                        let scoreHtml;
                         if (sr > sb) {
-                            scoreHtml = `<span class="score-win">${sr}</span>:<span class="score-loss">${sb}</span>`;
+                            // Red team wins → red color for winner, muted for loser
+                            scoreHtml = `<span class="score-red-win">${sr}</span>:<span class="score-loss">${sb}</span>`;
                         } else if (sb > sr) {
-                            scoreHtml = `<span class="score-loss">${sr}</span>:<span class="score-win">${sb}</span>`;
+                            // Blue team wins → blue color for winner, muted for loser
+                            scoreHtml = `<span class="score-loss">${sr}</span>:<span class="score-blue-win">${sb}</span>`;
                         } else {
                             scoreHtml = `<span class="score-draw">${sr}</span>:<span class="score-draw">${sb}</span>`;
                         }
