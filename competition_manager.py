@@ -1,9 +1,11 @@
 import asyncio
 import json
 import logging
+import math
 import os
 import sqlite3
 import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
@@ -40,6 +42,10 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
         "/api/tournament/state",
         "/api/results/standings",
         "/api/tournament/viz-state",
+        "/api/tournament/viz-stream",
+        "/api/tournament/games",
+        "/api/teams/details",
+        "/api/results",
     )
 
     def __init__(self, app, allowed_ips: list[str] = None):
@@ -103,6 +109,8 @@ class Team(BaseModel):
     name: str
     proxy_port: int
     enabled: bool = True
+    picture_url: str = ""
+    algorithm_description: str = ""
 
 class Simulator(BaseModel):
     id: int
@@ -139,7 +147,7 @@ class TournamentPairUpdate(BaseModel):
     team2_id: Optional[int] = None
 
 class VizStateUpdate(BaseModel):
-    view: Optional[str] = None          # "bracket", "match", "standings", "team", "title"
+    view: Optional[str] = None          # "bracket", "match", "standings", "team", "title", "teams", "matrix"
     match_id: Optional[int] = None      # which match to show
     round_name: Optional[str] = None    # which round to focus
     team_id: Optional[int] = None       # which team to show
@@ -192,6 +200,7 @@ def init_db():
             id INTEGER PRIMARY KEY CHECK (id = 1),
             phase TEXT NOT NULL DEFAULT 'preparation',
             confirmed INTEGER NOT NULL DEFAULT 0,
+            team_count INTEGER NOT NULL DEFAULT 8,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -274,6 +283,14 @@ async def get_teams():
         team_list.append(t_data)
     return team_list
 
+@app.get("/api/teams/details")
+async def get_teams_details():
+    """Public endpoint: returns team id, name, picture_url, algorithm_description."""
+    return [
+        {"id": tid, "name": t.name, "picture_url": t.picture_url, "algorithm_description": t.algorithm_description}
+        for tid, t in teams.items()
+    ]
+
 @app.post("/api/teams")
 async def add_team(team: Team):
     if team.id in teams:
@@ -290,6 +307,15 @@ async def remove_team(team_id: int):
         raise HTTPException(status_code=404, detail="Team not found")
     await proxy.remove_team(team_id)
     del teams[team_id]
+    save_config()
+    return {"status": "ok"}
+
+@app.put("/api/teams/{team_id}/details")
+async def update_team_details(team_id: int, picture_url: str = "", algorithm_description: str = ""):
+    if team_id not in teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+    teams[team_id].picture_url = picture_url
+    teams[team_id].algorithm_description = algorithm_description
     save_config()
     return {"status": "ok"}
 
@@ -432,6 +458,10 @@ async def save_match_results(sim_id: int):
     proxy.clear_route(pairing.blue_team_id)
     
     del active_matches[sim_id]
+
+    # Notify visualization clients about new results
+    await broadcast_viz_update()
+
     return {"status": "saved"}
 
 @app.get("/api/matches/active-count")
@@ -448,6 +478,10 @@ async def add_result(res: GameResult):
     """, (res.red_team_id, res.blue_team_id, res.red_team_name, res.blue_team_name, res.score_red, res.score_blue, res.game_time))
     conn.commit()
     conn.close()
+
+    # Notify visualization clients about new results
+    await broadcast_viz_update()
+
     return {"status": "ok"}
 
 @app.get("/api/matches/active")
@@ -523,6 +557,7 @@ async def update_result(result_id: int, score_red: int = Query(...), score_blue:
     cursor.execute("UPDATE game_results SET score_red = ?, score_blue = ? WHERE id = ?", (score_red, score_blue, result_id))
     conn.commit()
     conn.close()
+    await broadcast_viz_update()
     return {"status": "updated"}
 
 @app.delete("/api/results/{result_id}")
@@ -532,6 +567,7 @@ async def delete_result(result_id: int):
     cursor.execute("DELETE FROM game_results WHERE id = ?", (result_id,))
     conn.commit()
     conn.close()
+    await broadcast_viz_update()
     return {"status": "deleted"}
 
 @app.post("/api/results/clear-all")
@@ -541,6 +577,7 @@ async def clear_all_results():
     cursor.execute("DELETE FROM game_results")
     conn.commit()
     conn.close()
+    await broadcast_viz_update()
     return {"status": "cleared"}
 
 
@@ -566,7 +603,6 @@ def compute_qualification_standings():
     team_stats = {}  # team_id -> {name, pts, gf, ga, duels_played}
 
     # Group games by unordered pair
-    from collections import defaultdict
     duels = defaultdict(list)  # (min_id, max_id) -> list of game dicts
 
     for r in results:
@@ -655,21 +691,87 @@ async def get_standings():
 # TOURNAMENT API ENDPOINTS
 # ============================================================
 
-ROUND_NAMES = ["round_of_16", "quarter_final", "semi_final", "third_place", "final"]
-ROUND_DISPLAY = {
-    "round_of_16": "Osmina finala",
-    "quarter_final": "Četrtfinale",
-    "semi_final": "Polfinale",
-    "third_place": "Tekma za 3. mesto",
-    "final": "Finale",
-}
-ROUND_MATCH_COUNTS = {
-    "round_of_16": 8,
-    "quarter_final": 4,
-    "semi_final": 2,
-    "third_place": 1,
-    "final": 1,
-}
+# --- Dynamic round name helpers ---
+# Instead of hardcoded round names for 16 teams, we generate them
+# dynamically based on how many teams enter the tournament.
+
+def next_power_of_2(n: int) -> int:
+    """Return the smallest power of 2 >= n."""
+    if n <= 1:
+        return 1
+    return 1 << (n - 1).bit_length()
+
+
+def build_round_info(num_teams: int):
+    """
+    Build round names, display names, and match counts for a single-elimination
+    bracket with `num_teams` teams.  Padded to next power of 2 (byes fill gaps).
+
+    Returns (round_names, round_display, round_match_counts).
+    round_names is ordered from first round to semi_final (excluding third_place/final,
+    which are always the last two and handled specially).
+    """
+    bracket_size = next_power_of_2(num_teams)  # e.g. 5->8, 8->8, 10->16
+    num_rounds = int(math.log2(bracket_size))  # e.g. 8->3, 16->4
+
+    # Map: number of matches in round -> canonical round name & display
+    CANONICAL = {
+        1: ("final", "Finale"),         # not used in main list – always appended
+        2: ("semi_final", "Polfinale"),
+        4: ("quarter_final", "Četrtfinale"),
+        8: ("round_of_16", "Osmina finala"),
+        16: ("round_of_32", "Šestnajstina finala"),
+        32: ("round_of_64", "Dvaintrisetina finala"),
+    }
+
+    round_names = []     # ordered from first round to semi_final
+    round_display = {}   # round_name -> Slovenian display
+    round_match_counts = {}  # round_name -> number of matches
+
+    matches = bracket_size // 2   # first round matches
+    for r in range(num_rounds):
+        if matches < 1:
+            break
+        # Last round (matches==1) is final – handled separately
+        if matches == 1:
+            break
+        if matches in CANONICAL:
+            rname, rdisplay = CANONICAL[matches]
+        else:
+            rname = f"round_of_{matches * 2}"
+            rdisplay = f"Krog {matches * 2}"
+        round_names.append(rname)
+        round_display[rname] = rdisplay
+        round_match_counts[rname] = matches
+        matches //= 2
+
+    # Always add third_place and final at the end
+    round_names.append("third_place")
+    round_display["third_place"] = "Tekma za 3. mesto"
+    round_match_counts["third_place"] = 1
+
+    round_names.append("final")
+    round_display["final"] = "Finale"
+    round_match_counts["final"] = 1
+
+    return round_names, round_display, round_match_counts
+
+
+def get_first_round_name(num_teams: int) -> str:
+    """Return the name of the first round for this bracket size."""
+    rn, _, _ = build_round_info(num_teams)
+    return rn[0]
+
+
+def get_bracket_round_names():
+    """Get round names from the stored team_count in tournament_config."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT team_count FROM tournament_config WHERE id = 1")
+    row = cursor.fetchone()
+    conn.close()
+    team_count = row[0] if row else 8
+    return build_round_info(team_count)
 
 
 def get_tournament_phase():
@@ -683,15 +785,19 @@ def get_tournament_phase():
     return {"phase": "preparation", "confirmed": False}
 
 
-def set_tournament_phase(phase: str, confirmed: bool = False):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+def set_tournament_phase(phase: str, confirmed: bool = False, cursor=None):
+    """Update tournament phase. Optionally accepts an existing cursor to avoid DB lock."""
+    own_conn = cursor is None
+    if own_conn:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
     cursor.execute(
         "UPDATE tournament_config SET phase = ?, confirmed = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1",
         (phase, int(confirmed))
     )
-    conn.commit()
-    conn.close()
+    if own_conn:
+        conn.commit()
+        conn.close()
 
 
 def get_head_to_head_goals(team1_id: int, team2_id: int):
@@ -727,17 +833,31 @@ async def tournament_state():
 
 
 @app.post("/api/tournament/generate-pairs")
-async def generate_tournament_pairs():
-    """Generate round of 16 pairs from qualification standings (1v16, 2v15, etc.)"""
+async def generate_tournament_pairs(team_count: int = Query(default=8, ge=2)):
+    """Generate first-round pairs from qualification standings for any number of teams.
+    
+    Builds a proper single-elimination bracket:
+    - Pads to next power of 2 (e.g. 5 teams → 8 bracket slots)
+    - Top seeds get byes (auto-advance to next round)
+    - Seeding: 1 vs N, 2 vs N-1, etc. within the bracket structure
+    
+    Primarily designed for 8 teams, but works with any count.
+    """
     state = get_tournament_phase()
     if state["confirmed"]:
         raise HTTPException(status_code=400, detail="Tournament already confirmed")
 
     standings = compute_qualification_standings()
-    if len(standings) < 16:
-        raise HTTPException(status_code=400, detail=f"Need at least 16 teams, have {len(standings)}")
+    if len(standings) < team_count:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Need at least {team_count} teams, have {len(standings)}"
+        )
 
-    top16 = standings[:16]
+    top_teams = standings[:team_count]
+    bracket_size = next_power_of_2(team_count)  # e.g. 5→8, 8→8, 10→16
+    first_round_name = get_first_round_name(team_count)
+    num_byes = bracket_size - team_count  # top seeds get byes
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -746,26 +866,76 @@ async def generate_tournament_pairs():
     cursor.execute("DELETE FROM tournament_games WHERE pair_id IN (SELECT id FROM tournament_pairs)")
     cursor.execute("DELETE FROM tournament_pairs")
 
-    # Generate round of 16 pairs: 1v16, 2v15, 3v14, ..., 8v9
-    for i in range(8):
-        t1 = top16[i]
-        t2 = top16[15 - i]
+    # Build seeding for standard single-elimination bracket.
+    # Positions in the first round: pair seeds so 1 vs bracket_size, 2 vs bracket_size-1, etc.
+    # Teams with seed <= num_byes get a BYE (no first-round match).
+    # The rest play in the first round.
+    #
+    # E.g. 5 teams, bracket_size=8, num_byes=3:
+    #   Seeds 1,2,3 get byes. Seeds 4,5 play in first round.
+    #   Bracket: seed 1 vs BYE, seed 4 vs seed 5, seed 3 vs BYE, seed 2 vs BYE
+    #   -> Only one actual match in first round: seed 4 vs seed 5
+    #   -> Quarter-finals: 1 vs winner(4v5), 3 vs BYE-winner, 2 vs BYE-winner
+    #
+    # E.g. 8 teams, bracket_size=8, num_byes=0:
+    #   All 8 teams play in first round: 1v8, 4v5, 3v6, 2v7
 
-        cursor.execute("""
-            INSERT INTO tournament_pairs (round, match_index, team1_id, team2_id, team1_name, team2_name, team1_seed, team2_seed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, ("round_of_16", i, t1["id"], t2["id"], t1["name"], t2["name"], t1["rank"], t2["rank"]))
+    # Generate ALL bracket slots (including BYEs)
+    # BYE matches are stored as auto-completed pairs so advance_bracket works uniformly.
+    half = bracket_size // 2
+    real_match_count = 0
+    for i in range(half):
+        seed_a = i + 1  # 1-based seed
+        seed_b = bracket_size - i  # mirror seed
 
-        pair_id = cursor.lastrowid
-        # Create 2 games per pair
-        cursor.execute("INSERT INTO tournament_games (pair_id, game_number, status) VALUES (?, 1, 'pending')", (pair_id,))
-        cursor.execute("INSERT INTO tournament_games (pair_id, game_number, status) VALUES (?, 2, 'pending')", (pair_id,))
+        team_a = top_teams[seed_a - 1] if seed_a <= team_count else None
+        team_b = top_teams[seed_b - 1] if seed_b <= team_count else None
 
-    set_tournament_phase("preparation", False)
+        if team_a and team_b:
+            # Real match
+            cursor.execute("""
+                INSERT INTO tournament_pairs (round, match_index, team1_id, team2_id, team1_name, team2_name, team1_seed, team2_seed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (first_round_name, i, team_a["id"], team_b["id"], team_a["name"], team_b["name"], team_a["rank"], team_b["rank"]))
+            pair_id = cursor.lastrowid
+            cursor.execute("INSERT INTO tournament_games (pair_id, game_number, status) VALUES (?, 1, 'pending')", (pair_id,))
+            cursor.execute("INSERT INTO tournament_games (pair_id, game_number, status) VALUES (?, 2, 'pending')", (pair_id,))
+            real_match_count += 1
+
+        elif team_a:
+            # BYE: team_a auto-advances. Create pair with team_a as both teams (auto-win).
+            cursor.execute("""
+                INSERT INTO tournament_pairs (round, match_index, team1_id, team2_id, team1_name, team2_name, team1_seed, team2_seed, winner_id)
+                VALUES (?, ?, ?, NULL, ?, 'BYE', ?, NULL, ?)
+            """, (first_round_name, i, team_a["id"], team_a["name"], team_a["rank"], team_a["id"]))
+            pair_id = cursor.lastrowid
+            # BYE games are auto-completed
+            cursor.execute("INSERT INTO tournament_games (pair_id, game_number, team1_score, team2_score, status) VALUES (?, 1, 0, 0, 'completed')", (pair_id,))
+            cursor.execute("INSERT INTO tournament_games (pair_id, game_number, team1_score, team2_score, status) VALUES (?, 2, 0, 0, 'completed')", (pair_id,))
+
+        elif team_b:
+            # BYE: team_b auto-advances
+            cursor.execute("""
+                INSERT INTO tournament_pairs (round, match_index, team1_id, team2_id, team1_name, team2_name, team1_seed, team2_seed, winner_id)
+                VALUES (?, ?, NULL, ?, 'BYE', ?, NULL, ?, ?)
+            """, (first_round_name, i, team_b["id"], team_b["name"], team_b["rank"], team_b["id"]))
+            pair_id = cursor.lastrowid
+            cursor.execute("INSERT INTO tournament_games (pair_id, game_number, team1_score, team2_score, status) VALUES (?, 1, 0, 0, 'completed')", (pair_id,))
+            cursor.execute("INSERT INTO tournament_games (pair_id, game_number, team1_score, team2_score, status) VALUES (?, 2, 0, 0, 'completed')", (pair_id,))
+
+    set_tournament_phase("preparation", False, cursor=cursor)
+    cursor.execute("UPDATE tournament_config SET team_count = ? WHERE id = 1", (team_count,))
     conn.commit()
     conn.close()
 
-    return {"status": "generated", "pairs": 8}
+    return {
+        "status": "generated",
+        "team_count": team_count,
+        "bracket_size": bracket_size,
+        "first_round": first_round_name,
+        "first_round_matches": real_match_count,
+        "byes": num_byes,
+    }
 
 
 @app.get("/api/tournament/preparation")
@@ -774,7 +944,17 @@ async def get_tournament_preparation():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM tournament_pairs WHERE round = 'round_of_16' ORDER BY match_index")
+
+    # Get the first round name dynamically (the round with most pairs, excluding third_place/final)
+    cursor.execute("""
+        SELECT round FROM tournament_pairs 
+        WHERE round NOT IN ('third_place', 'final')
+        GROUP BY round ORDER BY COUNT(*) DESC LIMIT 1
+    """)
+    row = cursor.fetchone()
+    first_round = row[0] if row else "quarter_final"
+
+    cursor.execute("SELECT * FROM tournament_pairs WHERE round = ? ORDER BY match_index", (first_round,))
     pairs = [dict(r) for r in cursor.fetchall()]
     conn.close()
 
@@ -784,6 +964,7 @@ async def get_tournament_preparation():
         "pairs": pairs,
         "standings": standings,
         "phase": get_tournament_phase(),
+        "first_round": first_round,
     }
 
 
@@ -814,7 +995,7 @@ async def update_tournament_pair(update: TournamentPairUpdate):
 
 @app.post("/api/tournament/preparation/add-pair")
 async def add_tournament_pair(team1_id: int, team2_id: int):
-    """Add a new pair to the round of 16."""
+    """Add a new pair to the first round."""
     state = get_tournament_phase()
     if state["confirmed"]:
         raise HTTPException(status_code=400, detail="Tournament already confirmed")
@@ -822,8 +1003,17 @@ async def add_tournament_pair(team1_id: int, team2_id: int):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
+    # Detect first round dynamically
+    cursor.execute("""
+        SELECT round FROM tournament_pairs 
+        WHERE round NOT IN ('third_place', 'final')
+        GROUP BY round ORDER BY COUNT(*) DESC LIMIT 1
+    """)
+    row = cursor.fetchone()
+    first_round = row[0] if row else "quarter_final"
+
     # Get next match index
-    cursor.execute("SELECT COALESCE(MAX(match_index), -1) + 1 FROM tournament_pairs WHERE round = 'round_of_16'")
+    cursor.execute("SELECT COALESCE(MAX(match_index), -1) + 1 FROM tournament_pairs WHERE round = ?", (first_round,))
     next_idx = cursor.fetchone()[0]
 
     t1_name = teams[team1_id].name if team1_id in teams else f"Team {team1_id}"
@@ -831,8 +1021,8 @@ async def add_tournament_pair(team1_id: int, team2_id: int):
 
     cursor.execute("""
         INSERT INTO tournament_pairs (round, match_index, team1_id, team2_id, team1_name, team2_name, team1_seed, team2_seed)
-        VALUES ('round_of_16', ?, ?, ?, ?, ?, 0, 0)
-    """, (next_idx, team1_id, team2_id, t1_name, t2_name))
+        VALUES (?, ?, ?, ?, ?, ?, 0, 0)
+    """, (first_round, next_idx, team1_id, team2_id, t1_name, t2_name))
 
     pair_id = cursor.lastrowid
     cursor.execute("INSERT INTO tournament_games (pair_id, game_number, status) VALUES (?, 1, 'pending')", (pair_id,))
@@ -868,7 +1058,7 @@ async def confirm_tournament():
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM tournament_pairs WHERE round = 'round_of_16'")
+    cursor.execute("SELECT COUNT(*) FROM tournament_pairs")
     count = cursor.fetchone()[0]
     conn.close()
 
@@ -886,8 +1076,11 @@ async def get_tournament_bracket():
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
+    # Get dynamic round info from current bracket state
+    round_names, round_display, round_match_counts = get_bracket_round_names()
+
     bracket = {}
-    for round_name in ROUND_NAMES:
+    for round_name in round_names:
         cursor.execute("""
             SELECT tp.*, 
                    tp.id as pair_id
@@ -911,7 +1104,7 @@ async def get_tournament_bracket():
             pairs.append(p_dict)
 
         bracket[round_name] = {
-            "display_name": ROUND_DISPLAY.get(round_name, round_name),
+            "display_name": round_display.get(round_name, round_name),
             "pairs": pairs,
         }
 
@@ -920,6 +1113,9 @@ async def get_tournament_bracket():
     return {
         "state": get_tournament_phase(),
         "bracket": bracket,
+        "round_names": round_names,
+        "round_display": round_display,
+        "round_match_counts": round_match_counts,
     }
 
 
@@ -1153,15 +1349,20 @@ def determine_winner(pair_dict, duel_score):
 
 
 def advance_bracket(cursor, completed_round: str):
-    """Generate the next round's pairs from the completed round's winners."""
-    round_progression = {
-        "round_of_16": "quarter_final",
-        "quarter_final": "semi_final",
-        "semi_final": None,  # special: generates both third_place and final
-    }
+    """Generate the next round's pairs from the completed round's winners.
+    
+    Uses dynamic round progression based on current bracket size.
+    Handles byes: if a next-round pair already exists with one known team
+    and one pending slot, fills in the winner.
+    """
+    # Build dynamic round progression from DB state
+    round_names, _, _ = get_bracket_round_names()
+
+    # Find next round in sequence (excluding third_place/final from normal progression)
+    competitive_rounds = [r for r in round_names if r not in ("third_place", "final")]
 
     if completed_round == "semi_final":
-        # Get semi-final winners and losers
+        # Special: generates both third_place and final
         cursor.execute("""
             SELECT * FROM tournament_pairs WHERE round = 'semi_final' ORDER BY match_index
         """)
@@ -1177,12 +1378,13 @@ def advance_bracket(cursor, completed_round: str):
                 winners.append({"id": s["team2_id"], "name": s["team2_name"], "seed": s["team2_seed"]})
                 losers.append({"id": s["team1_id"], "name": s["team1_name"], "seed": s["team1_seed"]})
 
-        # Create third place match
-        if len(losers) >= 2:
+        # Create third place match (skip if any loser is a BYE/NULL team)
+        real_losers = [l for l in losers if l["id"] is not None]
+        if len(real_losers) >= 2:
             cursor.execute("""
                 INSERT INTO tournament_pairs (round, match_index, team1_id, team2_id, team1_name, team2_name, team1_seed, team2_seed)
                 VALUES ('third_place', 0, ?, ?, ?, ?, ?, ?)
-            """, (losers[0]["id"], losers[1]["id"], losers[0]["name"], losers[1]["name"], losers[0]["seed"], losers[1]["seed"]))
+            """, (real_losers[0]["id"], real_losers[1]["id"], real_losers[0]["name"], real_losers[1]["name"], real_losers[0]["seed"], real_losers[1]["seed"]))
             pid = cursor.lastrowid
             cursor.execute("INSERT INTO tournament_games (pair_id, game_number, status) VALUES (?, 1, 'pending')", (pid,))
             cursor.execute("INSERT INTO tournament_games (pair_id, game_number, status) VALUES (?, 2, 'pending')", (pid,))
@@ -1199,9 +1401,24 @@ def advance_bracket(cursor, completed_round: str):
 
         return
 
-    next_round = round_progression.get(completed_round)
-    if not next_round:
+    # Find the next round in competitive_rounds
+    if completed_round not in competitive_rounds:
         return
+    idx = competitive_rounds.index(completed_round)
+    if idx + 1 >= len(competitive_rounds):
+        return  # No more rounds (shouldn't happen, semi_final handled above)
+    next_round = competitive_rounds[idx + 1]
+
+    def get_winner_info(p):
+        wid = p["winner_id"]
+        if wid is not None and wid == p.get("team1_id"):
+            return {"id": p["team1_id"], "name": p["team1_name"], "seed": p["team1_seed"]}
+        if wid is not None and wid == p.get("team2_id"):
+            return {"id": p["team2_id"], "name": p["team2_name"], "seed": p["team2_seed"]}
+        # Fallback — shouldn't happen if data is consistent
+        if p.get("team1_id") is not None:
+            return {"id": p["team1_id"], "name": p["team1_name"], "seed": p["team1_seed"]}
+        return {"id": p["team2_id"], "name": p["team2_name"], "seed": p["team2_seed"]}
 
     # Get winners from completed round in order
     cursor.execute("""
@@ -1209,27 +1426,52 @@ def advance_bracket(cursor, completed_round: str):
     """, (completed_round,))
     pairs = [dict(r) for r in cursor.fetchall()]
 
-    # Winners pair up: 0+1, 2+3, etc.
-    for i in range(0, len(pairs), 2):
-        if i + 1 >= len(pairs):
-            break
+    # Check if next-round pairs already exist (from bye pre-population)
+    cursor.execute("""
+        SELECT * FROM tournament_pairs WHERE round = ? ORDER BY match_index
+    """, (next_round,))
+    existing_next = {dict(r)["match_index"]: dict(r) for r in cursor.fetchall()}
 
-        p1 = pairs[i]
-        p2 = pairs[i + 1]
+    # Winners pair up: pair 0+1 -> next match 0, pair 2+3 -> next match 1, etc.
+    # But we need to map by match_index, not by position in the result set
+    # The match_index in the current round maps to next round: 
+    #   current match_index i feeds into next round match_index i//2
+    # Group completed-round pairs by their next-round match slot
+    next_round_feeds = defaultdict(list)  # next_match_idx -> list of winner info
+    for p in pairs:
+        w = get_winner_info(p)
+        next_match_idx = p["match_index"] // 2
+        next_round_feeds[next_match_idx].append(w)
 
-        # Get winner info
-        def get_winner_info(p):
-            if p["winner_id"] == p["team1_id"]:
-                return {"id": p["team1_id"], "name": p["team1_name"], "seed": p["team1_seed"]}
-            return {"id": p["team2_id"], "name": p["team2_name"], "seed": p["team2_seed"]}
+    for next_match_idx, winners in next_round_feeds.items():
+        if next_match_idx in existing_next:
+            # Next-round pair already exists (pre-populated for byes).
+            # Fill in any NULL team slots with the winner(s).
+            existing = existing_next[next_match_idx]
+            for w in winners:
+                if existing["team1_id"] is None:
+                    cursor.execute("""
+                        UPDATE tournament_pairs SET team1_id = ?, team1_name = ?, team1_seed = ?
+                        WHERE id = ?
+                    """, (w["id"], w["name"], w["seed"], existing["id"]))
+                    existing["team1_id"] = w["id"]  # update local copy
+                elif existing["team2_id"] is None:
+                    cursor.execute("""
+                        UPDATE tournament_pairs SET team2_id = ?, team2_name = ?, team2_seed = ?
+                        WHERE id = ?
+                    """, (w["id"], w["name"], w["seed"], existing["id"]))
+                    existing["team2_id"] = w["id"]
+            continue
 
-        w1 = get_winner_info(p1)
-        w2 = get_winner_info(p2)
+        if len(winners) < 2:
+            continue
+
+        w1, w2 = winners[0], winners[1]
 
         cursor.execute("""
             INSERT INTO tournament_pairs (round, match_index, team1_id, team2_id, team1_name, team2_name, team1_seed, team2_seed)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (next_round, i // 2, w1["id"], w2["id"], w1["name"], w2["name"], w1["seed"], w2["seed"]))
+        """, (next_round, next_match_idx, w1["id"], w2["id"], w1["name"], w2["name"], w1["seed"], w2["seed"]))
 
         pid = cursor.lastrowid
         cursor.execute("INSERT INTO tournament_games (pair_id, game_number, status) VALUES (?, 1, 'pending')", (pid,))

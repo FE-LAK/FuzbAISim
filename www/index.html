@@ -575,6 +575,14 @@
                 <label>Proxy Port</label>
                 <input type="number" id="add-team-port">
             </div>
+            <div class="input-group">
+                <label>Slika URL</label>
+                <input type="text" id="add-team-picture" placeholder="https://...">
+            </div>
+            <div class="input-group">
+                <label>Opis algoritma</label>
+                <textarea id="add-team-algo" rows="3" style="width:100%; background:var(--card-bg); color:var(--text); border:1px solid var(--card-border); border-radius:8px; padding:8px; font-family:inherit; resize:vertical;"></textarea>
+            </div>
             <div style="display: flex; gap: 10px; margin-top: 30px;">
                 <button class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="submitAddTeam()">Add Team</button>
                 <button class="btn" style="flex: 1; justify-content: center;" onclick="closeAddTeam()">Cancel</button>
@@ -700,6 +708,17 @@
                 toggleBtn.setAttribute('onclick', `toggleTeam(${t.id}, ${!t.enabled})`);
                 
                 card.querySelector('.btn-delete').setAttribute('onclick', `deleteTeam(${t.id})`);
+
+                // Edit details button
+                let editBtn = card.querySelector('.btn-edit-details');
+                if (!editBtn) {
+                    editBtn = document.createElement('button');
+                    editBtn.className = 'btn btn-edit-details';
+                    editBtn.style.cssText = 'font-size:11px; padding:8px; margin-left:4px; background:hsla(255,85%,75%,0.15); color:var(--primary); border:1px solid hsla(255,85%,75%,0.3); border-radius:8px; cursor:pointer;';
+                    editBtn.textContent = '✎';
+                    card.querySelector('.btn-accent').parentElement.appendChild(editBtn);
+                }
+                editBtn.onclick = () => editTeamDetails(t.id, t.name, t.picture_url || '', t.algorithm_description || '');
             });
 
             // Remove cards for teams that no longer exist
@@ -994,11 +1013,22 @@
             document.getElementById('add-team-modal').style.display = 'none';
         }
 
+        async function editTeamDetails(teamId, teamName, pictureUrl, algoDesc) {
+            const newPic = prompt(`Slika URL za "${teamName}":`, pictureUrl);
+            if (newPic === null) return;
+            const newAlgo = prompt(`Opis algoritma za "${teamName}":`, algoDesc);
+            if (newAlgo === null) return;
+            await api(`/api/teams/${teamId}/details?picture_url=${encodeURIComponent(newPic)}&algorithm_description=${encodeURIComponent(newAlgo)}`, 'PUT');
+            refresh();
+        }
+
         async function submitAddTeam() {
             const id = parseInt(document.getElementById('add-team-id').value);
             const name = document.getElementById('add-team-name').value;
             const port = parseInt(document.getElementById('add-team-port').value);
-            await api('/api/teams', 'POST', { id, name, proxy_port: port });
+            const picture_url = document.getElementById('add-team-picture').value || '';
+            const algorithm_description = document.getElementById('add-team-algo').value || '';
+            await api('/api/teams', 'POST', { id, name, proxy_port: port, picture_url, algorithm_description });
             closeAddTeam();
             refresh();
         }

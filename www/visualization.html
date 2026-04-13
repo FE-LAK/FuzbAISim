@@ -829,6 +829,201 @@
             color: var(--primary);
         }
 
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* VIEW 6 — TEAMS PRESENTATION                                          */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #view-teams {
+            padding: 28px 48px 24px;
+            overflow-y: auto;
+        }
+
+        .teams-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .teams-header h1 {
+            font-size: clamp(2rem, 3.5vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .team-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-xl);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .team-card:hover {
+            border-color: hsla(255, 85%, 75%, 0.3);
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+
+        .team-card-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background: hsla(225, 25%, 10%, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .team-card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .team-card-img .no-img {
+            font-family: 'Outfit', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--primary);
+            opacity: 0.4;
+        }
+
+        .team-card-body {
+            padding: 24px 28px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .team-card-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.4rem, 2.2vw, 2rem);
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .team-card-algo {
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(0.85rem, 1.1vw, 1.05rem);
+            font-weight: 400;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
+        /* VIEW 7 — QUALIFICATION MATRIX                                      */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        #view-matrix {
+            padding: 28px 32px 24px;
+            overflow: auto;
+        }
+
+        .matrix-header {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .matrix-header h1 {
+            font-size: clamp(2rem, 3.5vw, 4rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--text) 0%, var(--warning) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .matrix-wrap {
+            width: 100%;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        table.qual-matrix {
+            border-collapse: separate;
+            border-spacing: 3px;
+            margin: 0 auto;
+        }
+
+        table.qual-matrix th,
+        table.qual-matrix td {
+            font-family: 'Outfit', sans-serif;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            white-space: nowrap;
+        }
+
+        table.qual-matrix th {
+            font-size: clamp(0.8rem, 1.1vw, 1.1rem);
+            font-weight: 700;
+        }
+
+        table.qual-matrix th.corner-cell {
+            background: transparent;
+        }
+
+        table.qual-matrix th.row-header {
+            color: hsl(0, 85%, 65%);
+            background: hsla(0, 85%, 65%, 0.1);
+            border: 1px solid hsla(0, 85%, 65%, 0.2);
+            text-align: right;
+            padding-right: 14px;
+        }
+
+        table.qual-matrix th.col-header {
+            color: hsl(210, 85%, 65%);
+            background: hsla(210, 85%, 65%, 0.1);
+            border: 1px solid hsla(210, 85%, 65%, 0.2);
+        }
+
+        table.qual-matrix td {
+            font-size: clamp(0.85rem, 1.15vw, 1.2rem);
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            min-width: 60px;
+        }
+
+        table.qual-matrix td.self-cell {
+            background: hsla(225, 25%, 15%, 0.5);
+            border-color: hsla(0, 0%, 100%, 0.04);
+        }
+
+        table.qual-matrix td.score-cell {
+            cursor: default;
+        }
+
+        table.qual-matrix td .score-win {
+            font-weight: 900;
+            color: var(--success);
+        }
+
+        table.qual-matrix td .score-loss {
+            font-weight: 600;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        table.qual-matrix td .score-draw {
+            font-weight: 700;
+            color: var(--warning);
+        }
+
         /* ─── Loading / Error states ────────────────────────────────────────── */
         .placeholder-text {
             font-family: 'Outfit', sans-serif;
@@ -1007,7 +1202,27 @@
         </div>
     </div>
 
-    <!-- ─── SSE status ──────────────────────────────────────────────────── -->
+        <!-- ─── VIEW 6: Teams Presentation ────────────────────────────── -->
+    <div id="view-teams" class="view">
+        <div class="teams-header">
+            <h1>Predstavitev ekip</h1>
+        </div>
+        <div class="teams-grid" id="teams-grid">
+            <div class="placeholder-text">Nalagam...</div>
+        </div>
+    </div>
+
+    <!-- ─── VIEW 7: Qualification Matrix ──────────────────────────── -->
+    <div id="view-matrix" class="view">
+        <div class="matrix-header">
+            <h1>Kvalifikacije &mdash; Rezultati</h1>
+        </div>
+        <div class="matrix-wrap" id="matrix-wrap">
+            <div class="placeholder-text">Nalagam...</div>
+        </div>
+    </div>
+
+<!-- ─── SSE status ──────────────────────────────────────────────────── -->
     <div id="sse-status">
         <span class="sse-dot"></span>
         <span id="sse-status-text">SSE</span>
@@ -1020,9 +1235,12 @@
     let vizState = { view: 'title', live: false, message: '', match_id: null, round_name: null, team_id: null };
     let bracketData = null;
     let standingsData = null;
+    let teamsDetailData = null;
+    let resultsData = null;
     let currentView = 'title';
 
-    const ROUND_NAMES = {
+    // Default round names (updated dynamically from API)
+    let ROUND_NAMES = {
         'round_of_16': 'Osmina finala',
         'quarter_final': 'Četrtfinale',
         'semi_final': 'Polfinale',
@@ -1086,6 +1304,10 @@
             renderMatch(state.match_id, state.round_name);
         } else if (view === 'team') {
             renderTeam(state.team_id);
+        } else if (view === 'teams') {
+            renderTeamsPresentation();
+        } else if (view === 'matrix') {
+            renderMatrix();
         }
     }
 
@@ -1097,6 +1319,10 @@
             const res = await fetch('/api/tournament/bracket');
             if (!res.ok) return;
             bracketData = await res.json();
+            // Update round names from API
+            if (bracketData.round_display) {
+                Object.assign(ROUND_NAMES, bracketData.round_display);
+            }
         } catch (e) {
             console.warn('Bracket fetch error:', e);
         }
@@ -1166,7 +1392,15 @@
         }
 
         const bracket = bracketData.bracket;
-        const roundOrder = ['round_of_16', 'quarter_final', 'semi_final', 'final'];
+        // Build dynamic round order from API response, or from bracket keys
+        let roundOrder;
+        if (bracketData.round_names) {
+            roundOrder = bracketData.round_names.filter(r => r !== 'third_place' && r !== 'final');
+            // Add 'final' at the end of main flow (not third_place)
+            if (bracketData.round_names.includes('final')) roundOrder.push('final');
+        } else {
+            roundOrder = Object.keys(bracket).filter(r => r !== 'third_place');
+        }
         const roundsFinal = ['third_place', 'final'];
 
         // Collect active pairs
@@ -1183,11 +1417,14 @@
         mainRounds.forEach(roundKey => {
             const round = bracket[roundKey];
             const label = ROUND_NAMES[roundKey] || roundKey;
+            // Filter out BYE pairs
+            const realPairs = (round.pairs || []).filter(p => p.team1_name !== 'BYE' && p.team2_name !== 'BYE');
+            if (realPairs.length === 0) return;  // Skip empty rounds after BYE filtering
 
             html += `<div class="bracket-round">
                 <div class="round-label">${label}</div>`;
 
-            round.pairs.forEach(pair => {
+            realPairs.forEach(pair => {
                 const isActive = activePairs.has(pair.id);
                 const pairCls = isActive ? 'bracket-pair active-match' : 'bracket-pair';
 
@@ -1450,6 +1687,130 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // Fetch helpers: teams details & results
+    // ─────────────────────────────────────────────────────────────────────────
+    async function fetchTeamsDetail() {
+        try {
+            const res = await fetch('/api/teams/details');
+            if (!res.ok) return;
+            teamsDetailData = await res.json();
+        } catch (e) {
+            console.warn('Teams detail fetch error:', e);
+        }
+    }
+
+    async function fetchResults() {
+        try {
+            const res = await fetch('/api/results');
+            if (!res.ok) return;
+            resultsData = await res.json();
+        } catch (e) {
+            console.warn('Results fetch error:', e);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RENDER: Teams Presentation
+    // ─────────────────────────────────────────────────────────────────────────
+    async function renderTeamsPresentation() {
+        if (!teamsDetailData) await fetchTeamsDetail();
+        const grid = document.getElementById('teams-grid');
+
+        if (!teamsDetailData || teamsDetailData.length === 0) {
+            grid.innerHTML = '<div class="placeholder-text">Ni ekip</div>';
+            return;
+        }
+
+        let html = '';
+        teamsDetailData.forEach(team => {
+            const imgHtml = team.picture_url
+                ? `<img src="${esc(team.picture_url)}" alt="${esc(team.name)}" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'>${esc(team.name).charAt(0)}</span>'">`
+                : `<span class="no-img">${esc(team.name).charAt(0)}</span>`;
+
+            html += `<div class="team-card">
+                <div class="team-card-img">${imgHtml}</div>
+                <div class="team-card-body">
+                    <div class="team-card-name">${esc(team.name)}</div>
+                    ${team.algorithm_description
+                        ? `<div class="team-card-algo">${esc(team.algorithm_description)}</div>`
+                        : ''}
+                </div>
+            </div>`;
+        });
+
+        grid.innerHTML = html;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RENDER: Qualification Matrix
+    // ─────────────────────────────────────────────────────────────────────────
+    async function renderMatrix() {
+        if (!resultsData) await fetchResults();
+        if (!standingsData) await fetchStandings();
+        const wrap = document.getElementById('matrix-wrap');
+
+        if (!standingsData || standingsData.length === 0) {
+            wrap.innerHTML = '<div class="placeholder-text">Ni podatkov</div>';
+            return;
+        }
+
+        // Build team order from standings (sorted by rank)
+        const teamOrder = [...standingsData].sort((a, b) => a.rank - b.rank);
+
+        // Build results lookup: key = "redId_blueId" -> {score_red, score_blue}
+        const resultsMap = {};
+        if (resultsData) {
+            resultsData.forEach(r => {
+                const key = r.red_team_id + '_' + r.blue_team_id;
+                resultsMap[key] = r;
+            });
+        }
+
+        let html = '<table class="qual-matrix">';
+
+        // Header row: corner + blue team names
+        html += '<tr><th class="corner-cell"></th>';
+        teamOrder.forEach(t => {
+            html += `<th class="col-header">${esc(t.name)}</th>`;
+        });
+        html += '</tr>';
+
+        // Data rows: red team name in row header + scores
+        teamOrder.forEach(rTeam => {
+            html += `<tr><th class="row-header">${esc(rTeam.name)}</th>`;
+
+            teamOrder.forEach(cTeam => {
+                if (rTeam.id === cTeam.id) {
+                    html += '<td class="self-cell"></td>';
+                } else {
+                    // rTeam is red, cTeam is blue
+                    const key = rTeam.id + '_' + cTeam.id;
+                    const match = resultsMap[key];
+                    if (match) {
+                        const sr = match.score_red;
+                        const sb = match.score_blue;
+                        let winClass, scoreHtml;
+                        if (sr > sb) {
+                            scoreHtml = `<span class="score-win">${sr}</span>:<span class="score-loss">${sb}</span>`;
+                        } else if (sb > sr) {
+                            scoreHtml = `<span class="score-loss">${sr}</span>:<span class="score-win">${sb}</span>`;
+                        } else {
+                            scoreHtml = `<span class="score-draw">${sr}</span>:<span class="score-draw">${sb}</span>`;
+                        }
+                        html += `<td class="score-cell">${scoreHtml}</td>`;
+                    } else {
+                        html += '<td>—</td>';
+                    }
+                }
+            });
+            html += '</tr>';
+        });
+
+        html += '</table>';
+        wrap.innerHTML = html;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Utilities
     // ─────────────────────────────────────────────────────────────────────────
     function esc(str) {
@@ -1488,11 +1849,14 @@
                 if (msg.type === 'viz_update' && msg.data) {
                     applyVizState(msg.data);
                 }
-                // Refresh bracket data on any update
-                fetchBracket().then(() => {
+                // Refresh data on any update
+                Promise.all([fetchBracket(), fetchStandings(), fetchResults(), fetchTeamsDetail()]).then(() => {
                     if (currentView === 'bracket') renderBracket();
                     else if (currentView === 'match') renderMatch(vizState.match_id, vizState.round_name);
                     else if (currentView === 'team') renderTeam(vizState.team_id);
+                    else if (currentView === 'standings') renderStandings();
+                    else if (currentView === 'teams') renderTeamsPresentation();
+                    else if (currentView === 'matrix') renderMatrix();
                 });
             } catch (err) {
                 console.warn('SSE parse error:', err);
@@ -1523,11 +1887,13 @@
     // Periodic refresh
     // ─────────────────────────────────────────────────────────────────────────
     setInterval(async () => {
-        await fetchBracket();
+        await Promise.all([fetchBracket(), fetchStandings(), fetchResults(), fetchTeamsDetail()]);
         if (currentView === 'bracket') renderBracket();
         else if (currentView === 'match') renderMatch(vizState.match_id, vizState.round_name);
         else if (currentView === 'standings') renderStandings();
         else if (currentView === 'team') renderTeam(vizState.team_id);
+        else if (currentView === 'teams') renderTeamsPresentation();
+        else if (currentView === 'matrix') renderMatrix();
     }, 5000);
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -1540,7 +1906,7 @@
             if (res.ok) {
                 const state = await res.json();
                 // Pre-fetch data
-                await Promise.all([fetchBracket(), fetchStandings()]);
+                await Promise.all([fetchBracket(), fetchStandings(), fetchResults(), fetchTeamsDetail()]);
                 applyVizState(state);
             }
         } catch (e) {

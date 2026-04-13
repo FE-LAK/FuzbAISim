@@ -656,6 +656,14 @@
                 Ekipa
                 <span class="view-sub">team</span>
             </button>
+            <button class="view-btn" data-view="teams" onclick="setView('teams')">
+                Ekipe
+                <span class="view-sub">teams</span>
+            </button>
+            <button class="view-btn" data-view="matrix" onclick="setView('matrix')">
+                Matrika
+                <span class="view-sub">matrix</span>
+            </button>
         </div>
     </div>
 
@@ -723,13 +731,16 @@ let currentVizState = {
     message: ''
 };
 
-const ROUND_NAMES = {
+// Default round names (updated dynamically from API)
+let ROUND_NAMES = {
     'round_of_16': 'Osmina finala',
     'quarter_final': 'Četrtfinale',
     'semi_final': 'Polfinale',
     'third_place': 'Tekma za 3. mesto',
     'final': 'Finale'
 };
+
+let DYNAMIC_ROUND_ORDER = null;  // populated from bracket API
 
 // ── API helpers ────────────────────────────────────────────────────────────
 async function apiGet(path) {
@@ -843,7 +854,15 @@ function updateLiveLabel(isLive) {
 // ── Load matches ───────────────────────────────────────────────────────────
 async function loadMatches() {
     try {
-        const data = await apiGet('/api/tournament/games');
+        // Also fetch bracket to get dynamic round names
+        const [data, bracketData] = await Promise.all([
+            apiGet('/api/tournament/games'),
+            apiGet('/api/tournament/bracket').catch(() => null)
+        ]);
+        if (bracketData) {
+            if (bracketData.round_display) Object.assign(ROUND_NAMES, bracketData.round_display);
+            if (bracketData.round_names) DYNAMIC_ROUND_ORDER = bracketData.round_names;
+        }
         renderMatches(data);
     } catch (e) {
         document.getElementById('matchListContainer').innerHTML =
@@ -874,7 +893,9 @@ function renderMatches(data) {
         rounds[r].push(game);
     });
 
-    const roundOrder = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final', 'unknown'];
+    const roundOrder = DYNAMIC_ROUND_ORDER 
+        ? [...DYNAMIC_ROUND_ORDER, 'unknown'] 
+        : Object.keys(rounds).sort();  // fallback: use whatever rounds exist
 
     let html = '<div class="match-list" id="matchList">';
     roundOrder.forEach(roundKey => {

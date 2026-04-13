@@ -862,7 +862,7 @@
 
     <!-- ===== 2. PREPARATION EDITOR ===== -->
     <div class="glass-card" id="prepSection" style="display:none;">
-        <div class="section-title">Priprava parov — Osmina finala</div>
+        <div class="section-title" id="prepSectionTitle">Priprava parov</div>
         <div style="overflow-x:auto;">
             <table class="prep-table" id="prepTable">
                 <thead>
@@ -976,7 +976,8 @@ let isRefreshing = false;
 // ===================================================================
 // ROUND NAME MAP
 // ===================================================================
-const ROUND_NAMES = {
+// Default round names (overridden dynamically from API)
+let ROUND_NAMES = {
     round_of_16: 'Osmina finala',
     quarter_final: 'Četrtfinale',
     semi_final: 'Polfinale',
@@ -984,7 +985,8 @@ const ROUND_NAMES = {
     final: 'Finale',
 };
 
-const ROUND_ORDER = ['round_of_16', 'quarter_final', 'semi_final'];
+// Dynamic round order (populated from /api/tournament/bracket response)
+let ROUND_ORDER = ['quarter_final', 'semi_final'];  // default for 8 teams
 
 // ===================================================================
 // TOAST
@@ -1098,6 +1100,13 @@ async function loadAll() {
         if (bracketData) {
             state.bracket = bracketData.bracket;
             if (bracketData.state) { state.phase = bracketData.state.phase; state.confirmed = bracketData.state.confirmed; }
+            // Update round names and order from API
+            if (bracketData.round_names) {
+                ROUND_ORDER = bracketData.round_names.filter(r => r !== 'third_place' && r !== 'final');
+            }
+            if (bracketData.round_display) {
+                Object.assign(ROUND_NAMES, bracketData.round_display);
+            }
         }
         if (gamesData) {
             state.games = { 
@@ -1159,6 +1168,11 @@ function renderStateBanner() {
     // Actions
     let html = '';
     if (state.phase === 'preparation') {
+        html += `<label style="display:inline-flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--text-dim);">
+            Št. ekip:
+            <input type="number" id="teamCountInput" value="8" min="2" max="64" 
+                   style="width:56px;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:var(--text-main);font-size:0.85rem;">
+        </label>`;
         html += `<button class="btn btn-primary" onclick="generatePairs()">⚡ Generiraj pare</button>`;
         if (!state.confirmed) {
             html += `<button class="btn btn-success" onclick="confirmTournament()">✓ Potrdi turnir</button>`;
@@ -1172,9 +1186,12 @@ function renderStateBanner() {
 // ACTIONS
 // ===================================================================
 async function generatePairs() {
+    const input = document.getElementById('teamCountInput');
+    const teamCount = input ? parseInt(input.value) || 8 : 8;
     try {
-        await apiPost('/api/tournament/generate-pairs');
-        showToast('Pari uspešno generirani!', 'success');
+        const result = await apiPost(`/api/tournament/generate-pairs?team_count=${teamCount}`);
+        const byeMsg = result.byes > 0 ? ` (${result.byes} bye-jev)` : '';
+        showToast(`Pari uspešno generirani: ${result.first_round_matches} tekem${byeMsg}`, 'success');
         await loadAll();
     } catch(e) {
         showToast('Napaka: ' + e.message, 'error');
@@ -1216,6 +1233,11 @@ function renderPrepSection() {
     }
     section.style.display = '';
 
+    // Update section title with dynamic round name
+    const firstRound = state.prepData?.first_round || 'quarter_final';
+    const roundTitle = ROUND_NAMES[firstRound] || firstRound;
+    document.getElementById('prepSectionTitle').textContent = `Priprava parov — ${roundTitle}`;
+
     const pairs = (state.prepData && state.prepData.pairs) ? state.prepData.pairs : [];
     const standings = state.standings || [];
     const tbody = document.getElementById('prepTableBody');
@@ -1247,7 +1269,7 @@ function renderPrepSection() {
         </tr>`;
     }).join('');
 
-    document.getElementById('prepStatus').textContent = `${pairs.length} / 8 parov`;
+    document.getElementById('prepStatus').textContent = `${pairs.length} parov`;
 }
 
 function buildTeamOptions(standings, selectedId) {
@@ -1348,7 +1370,8 @@ function renderBracket() {
 
     mainRounds.forEach((round, ri) => {
         const roundData = bracket[round];
-        const pairs = roundData.pairs || [];
+        // Filter out BYE pairs (auto-completed, not real matches)
+        const pairs = (roundData.pairs || []).filter(p => p.team1_name !== 'BYE' && p.team2_name !== 'BYE');
 
         html += `<div class="bracket-round">`;
         html += `<div class="bracket-round-header">${ROUND_NAMES[round] || round}</div>`;
