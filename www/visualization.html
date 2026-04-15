@@ -153,6 +153,47 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════════ */
+        /* SHARED — Page Header with Logo                                       */
+        /* ═══════════════════════════════════════════════════════════════════ */
+        .viz-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 14px 24px 10px;
+            flex-shrink: 0;
+        }
+
+        .viz-page-header .viz-logo-img {
+            height: 44px;
+            width: auto;
+            opacity: 0.85;
+        }
+
+        .viz-page-header .viz-header-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.2rem, 2vw, 1.8rem);
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.01em;
+            white-space: nowrap;
+        }
+
+        .viz-page-header .viz-header-sep {
+            width: 1px;
+            height: 28px;
+            background: hsla(0, 0%, 100%, 0.12);
+        }
+
+        .viz-page-header .viz-header-subtitle {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(0.9rem, 1.5vw, 1.3rem);
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════ */
         /* VIEW 1 — TITLE                                                      */
         /* ═══════════════════════════════════════════════════════════════════ */
         #view-title {
@@ -171,36 +212,12 @@
         }
 
         .title-logo {
-            width: 220px;
-            height: 220px;
-            border-radius: var(--radius-xl);
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            backdrop-filter: blur(8px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
             margin-bottom: 12px;
         }
 
-        .title-logo .logo-fe {
-            font-family: 'Outfit', sans-serif;
-            font-size: 64px;
-            font-weight: 900;
-            color: var(--green);
-            line-height: 1;
-            letter-spacing: -2px;
-        }
-
-        .title-logo .logo-lak {
-            font-family: 'Outfit', sans-serif;
-            font-size: 26px;
-            font-weight: 600;
-            color: var(--text-muted);
-            letter-spacing: 6px;
-            text-transform: uppercase;
+        .title-logo img {
+            height: clamp(140px, 20vw, 220px);
+            width: auto;
         }
 
         .title-event {
@@ -253,24 +270,12 @@
             overflow: hidden;
         }
 
-        .bracket-header {
-            text-align: center;
-            margin-bottom: 12px;
-        }
-
-        .bracket-header h1 {
-            font-size: clamp(1.6rem, 2.8vw, 3rem);
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        /* bracket-header replaced by viz-page-header */
 
         .bracket-tree {
             position: relative;
             width: 100%;
-            height: calc(100vh - 130px);
+            height: calc(100vh - 100px);
             overflow: hidden;
         }
 
@@ -698,19 +703,7 @@
             overflow: hidden;
         }
 
-        .standings-header {
-            text-align: center;
-            margin-bottom: 22px;
-        }
-
-        .standings-header h1 {
-            font-size: clamp(2rem, 3.5vw, 4rem);
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--text) 0%, var(--success) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        /* standings-header replaced by viz-page-header */
 
         .standings-table-wrap {
             width: 100%;
@@ -1103,19 +1096,7 @@
             overflow: auto;
         }
 
-        .matrix-header {
-            text-align: center;
-            margin-bottom: 22px;
-        }
-
-        .matrix-header h1 {
-            font-size: clamp(2rem, 3.5vw, 4rem);
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--text) 0%, var(--warning) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        /* matrix-header replaced by viz-page-header */
 
         .matrix-wrap {
             width: 100%;
@@ -1257,8 +1238,7 @@
     <div id="view-title" class="view active">
         <div class="title-inner">
             <div class="title-logo">
-                <span class="logo-fe">FE</span>
-                <span class="logo-lak">LAK</span>
+                <img src="dnevi_avtomatike_logo.png" alt="Dnevi Avtomatike">
             </div>
             <div class="title-event">Dnevi avtomatike in umetne inteligence 2026</div>
             <div class="title-name">Tekmovanje FuzbAI</div>
@@ -1270,8 +1250,12 @@
 
     <!-- ─── VIEW 2: Bracket ─────────────────────────────────────────────── -->
     <div id="view-bracket" class="view">
-        <div class="bracket-header">
-            <h1>FuzbAI &mdash; Potek tekmovanja</h1>
+        <div class="viz-page-header">
+            <img class="viz-logo-img" src="dnevi_avtomatike_logo.png" alt="Dnevi Avtomatike">
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-title">FuzbAI</span>
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-subtitle">Potek tekmovanja</span>
         </div>
         <div class="bracket-tree" id="bracket-tree">
             <div class="placeholder-text">Nalagam...</div>
@@ -1280,6 +1264,11 @@
 
     <!-- ─── VIEW 3: Match ──────────────────────────────────────────────── -->
     <div id="view-match" class="view">
+        <div class="viz-page-header" style="position:absolute;top:0;left:0;right:0;z-index:10;">
+            <img class="viz-logo-img" src="dnevi_avtomatike_logo.png" alt="Dnevi Avtomatike">
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-title">FuzbAI</span>
+        </div>
         <div class="match-container">
             <div class="match-round-label" id="match-round-label">—</div>
             <div class="match-teams">
@@ -1338,8 +1327,12 @@
 
     <!-- ─── VIEW 4: Standings ───────────────────────────────────────────── -->
     <div id="view-standings" class="view">
-        <div class="standings-header">
-            <h1>Kvalifikacije &mdash; Lestvica</h1>
+        <div class="viz-page-header">
+            <img class="viz-logo-img" src="dnevi_avtomatike_logo.png" alt="Dnevi Avtomatike">
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-title">FuzbAI</span>
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-subtitle">Kvalifikacije &mdash; Lestvica</span>
         </div>
         <div class="standings-table-wrap">
             <table class="standings-tbl" id="standings-tbl">
@@ -1361,6 +1354,11 @@
 
     <!-- ─── VIEW 5: Team Spotlight ─────────────────────────────────────── -->
     <div id="view-team" class="view">
+        <div class="viz-page-header" style="position:absolute;top:0;left:0;right:0;z-index:10;">
+            <img class="viz-logo-img" src="dnevi_avtomatike_logo.png" alt="Dnevi Avtomatike">
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-title">FuzbAI</span>
+        </div>
         <div class="team-spotlight-card">
             <div class="team-spotlight-top">
                 <div class="team-spotlight-photo" id="team-photo">
@@ -1394,6 +1392,13 @@
 
         <!-- ─── VIEW 6: Teams Presentation ────────────────────────────── -->
     <div id="view-teams" class="view">
+        <div class="viz-page-header" style="position:absolute;top:0;left:0;right:0;z-index:10;">
+            <img class="viz-logo-img" src="dnevi_avtomatike_logo.png" alt="Dnevi Avtomatike">
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-title">FuzbAI</span>
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-subtitle">Predstavitev ekip</span>
+        </div>
         <div class="teams-carousel" id="teams-carousel">
             <div class="placeholder-text">Nalagam...</div>
         </div>
@@ -1401,8 +1406,12 @@
 
     <!-- ─── VIEW 7: Qualification Matrix ──────────────────────────── -->
     <div id="view-matrix" class="view">
-        <div class="matrix-header">
-            <h1>Kvalifikacije &mdash; Rezultati</h1>
+        <div class="viz-page-header">
+            <img class="viz-logo-img" src="dnevi_avtomatike_logo.png" alt="Dnevi Avtomatike">
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-title">FuzbAI</span>
+            <div class="viz-header-sep"></div>
+            <span class="viz-header-subtitle">Kvalifikacije &mdash; Rezultati</span>
         </div>
         <div class="matrix-wrap" id="matrix-wrap">
             <div class="placeholder-text">Nalagam...</div>

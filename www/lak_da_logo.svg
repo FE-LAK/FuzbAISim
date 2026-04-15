@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 320" fill="none">
+  <g transform="translate(260,130)">
+    <!-- Outer red circle arc: from ~330deg going clockwise to ~225deg (with gap at top-left) -->
+    <!-- Right half: from top going clockwise to bottom-left -->
+    <path d="M 20,-95 A 95,95 0 1,1 -67,-67" 
+          stroke="#CF2E2E" stroke-width="26" stroke-linecap="square" fill="none"/>
+    <!-- Left-top segment: from bottom-left gap continuing to near top -->
+    <path d="M -67,-67 A 95,95 0 0,1 -20,-93" 
+          stroke="#CF2E2E" stroke-width="26" stroke-linecap="square" fill="none"/>
+    
+    <!-- Arrow head at top-right -->
+    <polygon points="24,-68 58,-98 18,-118" fill="#CF2E2E"/>
+    
+    <!-- Inner play triangle (dark on light theme, light on dark) -->
+    <polygon points="8,-76 30,-98 8,-112" fill="currentColor" opacity="0.9"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="260" y="280" text-anchor="middle" 
+        font-family="'Outfit','Inter','Helvetica Neue',sans-serif" 
+        font-size="44" font-weight="800" fill="currentColor" 
+        letter-spacing="0.02em">Dnevi Avtomatike</text>
+</svg>
