@@ -5,7 +5,7 @@
             "name": "Team 1",
             "proxy_port": 24001,
             "enabled": true,
-            "picture_url": "https://picsum.photos/id/1/400/400",
+            "picture_url": "/static/photos/team_1_e11c815b.png",
             "algorithm_description": "Na\u0161 algoritem temelji na globokem u\u010denju.",
             "members": []
         },
