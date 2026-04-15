@@ -3,15 +3,17 @@ import json
 import logging
 import math
 import os
+import shutil
 import sqlite3
 import time
+import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
 import httpx
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request, Query
+from fastapi import FastAPI, HTTPException, Request, Query, UploadFile, File
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -27,6 +29,8 @@ logger = logging.getLogger("competition_manager")
 DB_PATH = "results.db"
 CONFIG_PATH = "config.json"
 WWW_DIR = "www"
+PHOTOS_DIR = os.path.join(WWW_DIR, "photos")
+os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 # --- IP Whitelist Middleware ---
 
@@ -155,6 +159,16 @@ class VizStateUpdate(BaseModel):
     live: Optional[bool] = None         # live indicator
     message: Optional[str] = None       # overlay message
 
+class GoalAction(BaseModel):
+    team: int  # 1 or 2
+
+class FoulAction(BaseModel):
+    team: int  # 1 or 2
+
+class OverrideScore(BaseModel):
+    team1_total: float
+    team2_total: float
+
 # --- State ---
 
 teams: dict[int, Team] = {}
@@ -219,9 +233,19 @@ def init_db():
             team1_seed INTEGER,
             team2_seed INTEGER,
             winner_id INTEGER,
+            override_team1_total REAL DEFAULT NULL,
+            override_team2_total REAL DEFAULT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    try:
+        cursor.execute("ALTER TABLE tournament_pairs ADD COLUMN override_team1_total REAL DEFAULT NULL")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tournament_pairs ADD COLUMN override_team2_total REAL DEFAULT NULL")
+    except:
+        pass
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tournament_games (
@@ -230,12 +254,22 @@ def init_db():
             game_number INTEGER NOT NULL,
             team1_score INTEGER DEFAULT 0,
             team2_score INTEGER DEFAULT 0,
+            team1_fouls INTEGER DEFAULT 0,
+            team2_fouls INTEGER DEFAULT 0,
             game_time REAL DEFAULT 0,
             status TEXT NOT NULL DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (pair_id) REFERENCES tournament_pairs(id)
         )
     """)
+    try:
+        cursor.execute("ALTER TABLE tournament_games ADD COLUMN team1_fouls INTEGER DEFAULT 0")
+    except:
+        pass
+    try:
+        cursor.execute("ALTER TABLE tournament_games ADD COLUMN team2_fouls INTEGER DEFAULT 0")
+    except:
+        pass
 
     # Initialize tournament config if not exists
     cursor.execute("INSERT OR IGNORE INTO tournament_config (id, phase) VALUES (1, 'preparation')")
@@ -331,6 +365,36 @@ async def update_team_details(team_id: int, details: TeamDetailsUpdate):
         teams[team_id].members = details.members[:3]  # max 3 members
     save_config()
     return {"status": "ok"}
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
+
+@app.post("/api/teams/{team_id}/photo")
+async def upload_team_photo(team_id: int, file: UploadFile = File(...)):
+    if team_id not in teams:
+        raise HTTPException(status_code=404, detail="Team not found")
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail=f"Nepodprt tip datoteke: {file.content_type}. Dovoljeni: JPEG, PNG, GIF, WebP.")
+    contents = await file.read()
+    if len(contents) > MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail="Datoteka je prevelika (maks. 5 MB).")
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
+    if ext not in ('jpg', 'jpeg', 'png', 'gif', 'webp'):
+        ext = 'jpg'
+    filename = f"team_{team_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = os.path.join(PHOTOS_DIR, filename)
+    # Remove old uploaded photo if it was in photos dir
+    old_url = teams[team_id].picture_url or ''
+    if old_url.startswith('/static/photos/') or old_url.startswith('/photos/'):
+        old_file = os.path.join(WWW_DIR, old_url.lstrip('/').replace('static/', '', 1) if old_url.startswith('/static/') else old_url.lstrip('/'))
+        if os.path.exists(old_file):
+            os.remove(old_file)
+    with open(filepath, 'wb') as f:
+        f.write(contents)
+    photo_url = f"/static/photos/{filename}"
+    teams[team_id].picture_url = photo_url
+    save_config()
+    return {"status": "ok", "picture_url": photo_url}
 
 @app.post("/api/teams/{team_id}/enable")
 async def enable_team(team_id: int, enabled: bool):
@@ -1139,9 +1203,11 @@ def compute_duel_score(pair_dict, cursor=None):
     """Compute the tournament duel score including qualification advantage.
 
     Rules §2.3:
-    - Each tournament goal = 1 point
+    - Each tournament goal = 1 point  (already includes foul-penalty goals in score cols)
     - Each qualification goal (from head-to-head between same teams) = 0.5 points
     - Tiebreaker: (1) total points, (2) qual duel winner, (3) better qual rank
+    - Override: if override_team1_total / override_team2_total are set on the pair,
+      those values replace the computed totals.
     """
     t1_id = pair_dict.get("team1_id")
     t2_id = pair_dict.get("team2_id")
@@ -1149,17 +1215,37 @@ def compute_duel_score(pair_dict, cursor=None):
         return None
 
     games = pair_dict.get("games", [])
-    completed_games = [g for g in games if g["status"] == "completed"]
+    scored_games = [g for g in games if g["status"] in ("completed", "active")]
+    all_games = games  # include all games for foul tracking display
 
-    # Tournament goals (1pt each)
-    t1_tournament_goals = sum(g["team1_score"] for g in completed_games)
-    t2_tournament_goals = sum(g["team2_score"] for g in completed_games)
+    # Tournament goals (1pt each) — score columns already include foul-penalty goals
+    # Include both completed and active games for live score updates
+    t1_tournament_goals = sum(g["team1_score"] for g in scored_games)
+    t2_tournament_goals = sum(g["team2_score"] for g in scored_games)
+
+    # Foul totals across all games (for display)
+    t1_fouls_total = sum(g.get("team1_fouls", 0) for g in all_games)
+    t2_fouls_total = sum(g.get("team2_fouls", 0) for g in all_games)
+
+    # Foul penalty points: points awarded to opponent due to fouls
+    # team1_foul_penalty = goals given to team2 because of team1's fouls
+    # Since foul-penalty goals are already in the score columns, this is informational only
+    t1_foul_penalty = sum(max(0, g.get("team1_fouls", 0) - 3) for g in all_games)
+    t2_foul_penalty = sum(max(0, g.get("team2_fouls", 0) - 3) for g in all_games)
 
     # Qualification head-to-head goals (0.5pt each)
     t1_qual_goals, t2_qual_goals = get_head_to_head_goals(t1_id, t2_id)
 
     t1_total = t1_tournament_goals * 1.0 + t1_qual_goals * 0.5
     t2_total = t2_tournament_goals * 1.0 + t2_qual_goals * 0.5
+
+    # Check for override
+    override_t1 = pair_dict.get("override_team1_total")
+    override_t2 = pair_dict.get("override_team2_total")
+    override_active = override_t1 is not None and override_t2 is not None
+    if override_active:
+        t1_total = override_t1
+        t2_total = override_t2
 
     # Determine qual duel winner for tiebreaker
     qual_duel_winner = None
@@ -1178,6 +1264,12 @@ def compute_duel_score(pair_dict, cursor=None):
         "qual_duel_winner": qual_duel_winner,
         "team1_seed": pair_dict.get("team1_seed"),
         "team2_seed": pair_dict.get("team2_seed"),
+        # Foul tracking (informational)
+        "team1_fouls_total": t1_fouls_total,
+        "team2_fouls_total": t2_fouls_total,
+        "team1_foul_points": t1_foul_penalty,  # points team1's fouls gave to team2
+        "team2_foul_points": t2_foul_penalty,  # points team2's fouls gave to team1
+        "override": override_active,
     }
 
 
@@ -1237,6 +1329,89 @@ async def set_game_active(game_id: int):
     conn.commit()
     conn.close()
     return {"status": "activated"}
+
+
+@app.post("/api/tournament/game/{game_id}/goal")
+async def add_game_goal(game_id: int, action: GoalAction):
+    """Increment goal score for team 1 or 2 in an active game."""
+    if action.team not in (1, 2):
+        raise HTTPException(status_code=400, detail="team must be 1 or 2")
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM tournament_games WHERE id = ?", (game_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Game not found")
+    game = dict(row)
+    if game["status"] != "active":
+        conn.close()
+        raise HTTPException(status_code=400, detail="Game is not active")
+
+    score_col = "team1_score" if action.team == 1 else "team2_score"
+    cursor.execute(
+        f"UPDATE tournament_games SET {score_col} = {score_col} + 1 WHERE id = ?",
+        (game_id,)
+    )
+    conn.commit()
+
+    cursor.execute("SELECT * FROM tournament_games WHERE id = ?", (game_id,))
+    updated = dict(cursor.fetchone())
+    conn.close()
+
+    await broadcast_viz_update()
+    return updated
+
+
+@app.post("/api/tournament/game/{game_id}/foul")
+async def add_game_foul(game_id: int, action: FoulAction):
+    """Increment foul count for team 1 or 2 in an active game.
+    The 4th and each subsequent foul awards 1 point to the opposing team.
+    """
+    if action.team not in (1, 2):
+        raise HTTPException(status_code=400, detail="team must be 1 or 2")
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM tournament_games WHERE id = ?", (game_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Game not found")
+    game = dict(row)
+    if game["status"] != "active":
+        conn.close()
+        raise HTTPException(status_code=400, detail="Game is not active")
+
+    foul_col = "team1_fouls" if action.team == 1 else "team2_fouls"
+    # Opposing team's score column
+    opponent_score_col = "team2_score" if action.team == 1 else "team1_score"
+
+    new_fouls = game[foul_col] + 1
+    # 4th foul and every subsequent one awards a point to the opponent
+    if new_fouls >= 4:
+        cursor.execute(
+            f"UPDATE tournament_games SET {foul_col} = ?, {opponent_score_col} = {opponent_score_col} + 1 WHERE id = ?",
+            (new_fouls, game_id)
+        )
+    else:
+        cursor.execute(
+            f"UPDATE tournament_games SET {foul_col} = ? WHERE id = ?",
+            (new_fouls, game_id)
+        )
+    conn.commit()
+
+    cursor.execute("SELECT * FROM tournament_games WHERE id = ?", (game_id,))
+    updated = dict(cursor.fetchone())
+    conn.close()
+
+    await broadcast_viz_update()
+    return updated
 
 
 @app.post("/api/tournament/game/{game_id}/result")
@@ -1332,19 +1507,118 @@ async def confirm_game_result(game_id: int):
     return {"status": "confirmed"}
 
 
+@app.post("/api/tournament/pair/{pair_id}/override-score")
+async def override_pair_score(pair_id: int, override: OverrideScore):
+    """Override the total duel score for a pair (even if already completed).
+    Re-determines the winner using the overridden scores.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM tournament_pairs WHERE id = ?", (pair_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Pair not found")
+    pair = dict(row)
+
+    # Set override totals
+    cursor.execute(
+        "UPDATE tournament_pairs SET override_team1_total = ?, override_team2_total = ? WHERE id = ?",
+        (override.team1_total, override.team2_total, pair_id)
+    )
+
+    # Re-determine winner using the override scores
+    t1_id = pair["team1_id"]
+    t2_id = pair["team2_id"]
+    if t1_id and t2_id:
+        if override.team1_total > override.team2_total:
+            winner_id = t1_id
+        elif override.team2_total > override.team1_total:
+            winner_id = t2_id
+        else:
+            # Tiebreaker: better seed (lower seed number = better rank)
+            t1_seed = pair.get("team1_seed") or 999
+            t2_seed = pair.get("team2_seed") or 999
+            winner_id = t1_id if t1_seed <= t2_seed else t2_id
+        cursor.execute("UPDATE tournament_pairs SET winner_id = ? WHERE id = ?", (winner_id, pair_id))
+
+    conn.commit()
+
+    # Return updated pair
+    cursor.execute("SELECT * FROM tournament_pairs WHERE id = ?", (pair_id,))
+    updated_pair = dict(cursor.fetchone())
+    conn.close()
+
+    await broadcast_viz_update()
+    return updated_pair
+
+
+@app.post("/api/tournament/pair/{pair_id}/clear-override")
+async def clear_pair_override(pair_id: int):
+    """Clear any score override on a pair and re-determine winner from normal scoring."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM tournament_pairs WHERE id = ?", (pair_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Pair not found")
+    pair = dict(row)
+
+    # Clear override
+    cursor.execute(
+        "UPDATE tournament_pairs SET override_team1_total = NULL, override_team2_total = NULL WHERE id = ?",
+        (pair_id,)
+    )
+
+    # Re-determine winner from normal scoring if the pair was completed
+    cursor.execute("SELECT * FROM tournament_games WHERE pair_id = ? ORDER BY game_number", (pair_id,))
+    pair["games"] = [dict(g) for g in cursor.fetchall()]
+    pair["override_team1_total"] = None
+    pair["override_team2_total"] = None
+
+    all_completed = all(g["status"] == "completed" for g in pair["games"]) and len(pair["games"]) > 0
+    if all_completed and pair.get("team1_id") and pair.get("team2_id"):
+        duel = compute_duel_score(pair, cursor)
+        winner_id = determine_winner(pair, duel)
+        cursor.execute("UPDATE tournament_pairs SET winner_id = ? WHERE id = ?", (winner_id, pair_id))
+
+    conn.commit()
+
+    cursor.execute("SELECT * FROM tournament_pairs WHERE id = ?", (pair_id,))
+    updated_pair = dict(cursor.fetchone())
+    conn.close()
+
+    await broadcast_viz_update()
+    return updated_pair
+
+
 def determine_winner(pair_dict, duel_score):
-    """Determine the winner of a tournament pair per rules §2.3."""
+    """Determine the winner of a tournament pair per rules §2.3.
+    If override totals are active (duel_score['override'] is True),
+    the overridden total_points are already applied in duel_score.
+    """
     if not duel_score:
         return None
 
     t1_id = pair_dict["team1_id"]
     t2_id = pair_dict["team2_id"]
 
-    # (1) Total points
+    # (1) Total points (already reflects override if active)
     if duel_score["team1_total_points"] > duel_score["team2_total_points"]:
         return t1_id
     elif duel_score["team2_total_points"] > duel_score["team1_total_points"]:
         return t2_id
+
+    # If override is active and scores are tied, use seed as tiebreaker directly
+    if duel_score.get("override"):
+        t1_seed = duel_score.get("team1_seed") or 999
+        t2_seed = duel_score.get("team2_seed") or 999
+        return t1_id if t1_seed <= t2_seed else t2_id
 
     # (2) Qualification duel winner
     if duel_score["qual_duel_winner"] == t1_id:

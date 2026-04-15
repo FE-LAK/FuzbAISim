@@ -544,12 +544,33 @@
             font-family: 'Outfit', sans-serif;
             font-size: clamp(0.85rem, 1.2vw, 1.3rem);
             font-weight: 700;
-            color: var(--success);
+            /* color set dynamically */
             display: none;
         }
 
         .match-qual-advantage.visible {
             display: inline-block;
+        }
+
+        /* ── Foul / Yellow Card Badge ── */
+        .match-team {
+            position: relative;
+        }
+
+        .match-foul-badge {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1rem, 1.6vw, 1.8rem);
+            font-weight: 700;
+            color: hsl(45, 100%, 60%);
+            background: hsla(45, 100%, 60%, 0.1);
+            border: 1px solid hsla(45, 100%, 60%, 0.3);
+            border-radius: 8px;
+            padding: 4px 12px;
+            z-index: 2;
+            display: none;
         }
 
         .match-games {
@@ -1865,6 +1886,17 @@
         document.getElementById('match-seed1').textContent = pair.team1_seed ? `#${pair.team1_seed}` : '—';
         document.getElementById('match-seed2').textContent = pair.team2_seed ? `#${pair.team2_seed}` : '—';
 
+        // Team colors based on current playing side
+        // Game 1: team1=Rdeča(red), team2=Modra(blue). Game 2: sides swap.
+        const activeGame = pair.games && pair.games.find(g => g.status === 'active');
+        const currentGameNum = activeGame ? activeGame.game_number : 1;
+        const team1Color = currentGameNum === 2 ? 'hsl(215, 80%, 60%)' : 'hsl(0, 80%, 60%)';
+        const team2Color = currentGameNum === 2 ? 'hsl(0, 80%, 60%)' : 'hsl(215, 80%, 60%)';
+        document.getElementById('match-name1').style.color = pair.winner_id ? '' : team1Color;
+        document.getElementById('match-name2').style.color = pair.winner_id ? '' : team2Color;
+        document.getElementById('match-pts1').style.color = pair.winner_id ? '' : team1Color;
+        document.getElementById('match-pts2').style.color = pair.winner_id ? '' : team2Color;
+
         // Team photos
         if (!teamsDetailData) await fetchTeamsDetail();
         const detail1 = teamsDetailData && teamsDetailData.find(t => t.id === pair.team1_id);
@@ -1882,21 +1914,38 @@
             photo2El.innerHTML = `<span class="no-img">${esc(pair.team2_name || '?').charAt(0)}</span>`;
         }
 
-        // Qualifying advantage
+        // Qualifying advantage / disadvantage (halved values)
         const adv1El = document.getElementById('match-adv1');
         const adv2El = document.getElementById('match-adv2');
         adv1El.classList.remove('visible');
         adv2El.classList.remove('visible');
         adv1El.textContent = '';
         adv2El.textContent = '';
+        adv1El.style.color = '';
+        adv2El.style.color = '';
         const ds0 = pair.duel_score || {};
         const q1 = ds0.team1_qual_goals || 0;
         const q2 = ds0.team2_qual_goals || 0;
-        if (q1 > q2) {
-            adv1El.textContent = `Prednost iz kvalifikacij: ${q1}:${q2}`;
+        if (q1 !== q2 && (q1 > 0 || q2 > 0)) {
+            const q1half = (q1 * 0.5).toFixed(1).replace(/\.0$/, '');
+            const q2half = (q2 * 0.5).toFixed(1).replace(/\.0$/, '');
+            // Team 1 display
+            if (q1 > q2) {
+                adv1El.textContent = `Prednost iz kvalifikacij: +${q1half}`;
+                adv1El.style.color = 'hsl(155, 65%, 50%)';
+            } else {
+                adv1El.textContent = `Zaostanek iz kvalifikacij: +${q1half}`;
+                adv1El.style.color = 'hsl(0, 75%, 60%)';
+            }
             adv1El.classList.add('visible');
-        } else if (q2 > q1) {
-            adv2El.textContent = `Prednost iz kvalifikacij: ${q2}:${q1}`;
+            // Team 2 display
+            if (q2 > q1) {
+                adv2El.textContent = `Prednost iz kvalifikacij: +${q2half}`;
+                adv2El.style.color = 'hsl(155, 65%, 50%)';
+            } else {
+                adv2El.textContent = `Zaostanek iz kvalifikacij: +${q2half}`;
+                adv2El.style.color = 'hsl(0, 75%, 60%)';
+            }
             adv2El.classList.add('visible');
         }
 
@@ -1920,6 +1969,30 @@
         const pts2 = ds.team2_total_points !== undefined ? formatNum(ds.team2_total_points) : '0';
         document.getElementById('match-pts1').textContent = pts1;
         document.getElementById('match-pts2').textContent = pts2;
+
+        // Foul / yellow card badges
+        const t1Fouls = ds.team1_fouls_total || 0;
+        const t2Fouls = ds.team2_fouls_total || 0;
+
+        let foulBadge1 = document.getElementById('match-foul1');
+        if (!foulBadge1) {
+            foulBadge1 = document.createElement('div');
+            foulBadge1.id = 'match-foul1';
+            foulBadge1.className = 'match-foul-badge';
+            document.getElementById('match-team1').appendChild(foulBadge1);
+        }
+        foulBadge1.textContent = t1Fouls > 0 ? `🟨 ${t1Fouls}` : '';
+        foulBadge1.style.display = t1Fouls > 0 ? 'block' : 'none';
+
+        let foulBadge2 = document.getElementById('match-foul2');
+        if (!foulBadge2) {
+            foulBadge2 = document.createElement('div');
+            foulBadge2.id = 'match-foul2';
+            foulBadge2.className = 'match-foul-badge';
+            document.getElementById('match-team2').appendChild(foulBadge2);
+        }
+        foulBadge2.textContent = t2Fouls > 0 ? `🟨 ${t2Fouls}` : '';
+        foulBadge2.style.display = t2Fouls > 0 ? 'block' : 'none';
 
         // Winner highlighting
         const t1el = document.getElementById('match-team1');

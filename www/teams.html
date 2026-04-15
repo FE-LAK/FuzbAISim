@@ -292,6 +292,51 @@
         .dialog-body { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 24px; }
         .dialog-actions { display: flex; gap: 10px; justify-content: center; }
 
+        /* ─── Photo upload ─── */
+        .photo-upload-area {
+            border: 2px dashed var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.02);
+        }
+        .photo-upload-area:hover, .photo-upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(129,140,248,0.06);
+        }
+        .photo-upload-area.has-file {
+            border-style: solid;
+            border-color: rgba(52,211,153,0.4);
+            background: rgba(52,211,153,0.05);
+            padding: 10px;
+        }
+        .photo-upload-thumb {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .photo-upload-thumb img {
+            width: 56px; height: 56px; border-radius: 8px; object-fit: cover;
+            border: 1px solid var(--card-border);
+        }
+        .photo-upload-thumb .info {
+            flex: 1; min-width: 0; text-align: left;
+        }
+        .photo-upload-thumb .info .name {
+            font-size: 0.8rem; font-weight: 600; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .photo-upload-thumb .info .size {
+            font-size: 0.7rem; color: var(--text-muted);
+        }
+        .photo-upload-thumb .remove-photo {
+            cursor: pointer; font-size: 1.1rem; color: var(--text-muted);
+            padding: 4px 8px; border-radius: 6px; transition: all 0.2s;
+        }
+        .photo-upload-thumb .remove-photo:hover {
+            color: var(--danger); background: rgba(239,68,68,0.1);
+        }
+
         /* ─── Empty state ─── */
         .empty-state {
             text-align: center; padding: 60px 20px;
@@ -357,11 +402,20 @@
         </div>
 
         <div class="form-group">
-            <label>Slika ekipe (URL)</label>
-            <input type="text" id="fPictureUrl" placeholder="https://example.com/photo.jpg" oninput="updatePicturePreview()">
-            <div class="picture-preview" id="picturePreview">
-                <div class="no-preview">—</div>
-                <span style="font-size:0.75rem;color:var(--text-muted);">Predogled</span>
+            <label>Slika ekipe</label>
+            <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('fPhotoFile').click()" ondrop="handlePhotoDrop(event)" ondragover="event.preventDefault(); this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')">
+                <div id="photoUploadContent">
+                    <div style="font-size:1.5rem;margin-bottom:4px;">📷</div>
+                    <div style="font-size:0.8rem;font-weight:600;">Kliknite ali povlecite sliko</div>
+                    <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">JPEG, PNG, GIF, WebP · Maks. 5 MB</div>
+                </div>
+            </div>
+            <input type="file" id="fPhotoFile" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="handlePhotoSelect(this)">
+            <div class="picture-preview" id="picturePreview" style="margin-top:8px;">
+            </div>
+            <div style="margin-top:8px;">
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;cursor:pointer;" onclick="toggleUrlInput()">⯈ Ali vnesite URL naslov</div>
+                <input type="text" id="fPictureUrl" placeholder="https://example.com/photo.jpg" oninput="updatePicturePreview()" style="display:none">
             </div>
         </div>
 
@@ -408,6 +462,7 @@
 let teams = [];
 let editingTeamId = null; // null = adding
 let currentMembers = [];
+let pendingPhotoFile = null; // File object for upload
 
 // ═══════════════════════════════════════════════════════════════
 // API
@@ -491,6 +546,7 @@ function esc(s) {
 function openAddModal() {
     editingTeamId = null;
     currentMembers = [];
+    pendingPhotoFile = null;
     document.getElementById('modalTitle').textContent = 'Dodaj ekipo';
     document.getElementById('modalSaveBtn').textContent = 'Dodaj';
     document.getElementById('idGroup').style.display = '';
@@ -499,7 +555,10 @@ function openAddModal() {
     document.getElementById('fTeamName').value = '';
     document.getElementById('fProxyPort').value = '';
     document.getElementById('fPictureUrl').value = '';
+    document.getElementById('fPictureUrl').style.display = 'none';
+    document.getElementById('fPhotoFile').value = '';
     document.getElementById('fAlgoDesc').value = '';
+    resetPhotoUploadArea();
     renderMemberTags();
     updatePicturePreview();
     document.getElementById('teamModal').classList.add('open');
@@ -510,6 +569,7 @@ function openEditModal(teamId) {
     if (!t) return;
     editingTeamId = teamId;
     currentMembers = [...(t.members || [])];
+    pendingPhotoFile = null;
     document.getElementById('modalTitle').textContent = `Uredi: ${t.name}`;
     document.getElementById('modalSaveBtn').textContent = 'Shrani';
     document.getElementById('idGroup').style.display = 'none';
@@ -518,7 +578,15 @@ function openEditModal(teamId) {
     document.getElementById('fTeamName').value = t.name;
     document.getElementById('fProxyPort').value = t.proxy_port;
     document.getElementById('fPictureUrl').value = t.picture_url || '';
+    document.getElementById('fPictureUrl').style.display = 'none';
+    document.getElementById('fPhotoFile').value = '';
     document.getElementById('fAlgoDesc').value = t.algorithm_description || '';
+    // Show current photo in upload area if exists
+    if (t.picture_url) {
+        showPhotoInUploadArea(t.picture_url, 'Trenutna slika');
+    } else {
+        resetPhotoUploadArea();
+    }
     renderMemberTags();
     updatePicturePreview();
     document.getElementById('teamModal').classList.add('open');
@@ -530,15 +598,20 @@ function closeModal() {
 
 async function saveTeam() {
     try {
+        let teamId = editingTeamId;
+
         if (editingTeamId !== null) {
-            // UPDATE existing team
-            await api(`/api/teams/${editingTeamId}/details`, 'PUT', {
+            // UPDATE existing team — save details first (without picture_url if we'll upload)
+            const details = {
                 name: document.getElementById('fTeamName').value.trim(),
-                picture_url: document.getElementById('fPictureUrl').value.trim(),
                 algorithm_description: document.getElementById('fAlgoDesc').value.trim(),
                 members: currentMembers,
-            });
-            showToast('Ekipa posodobljena.', 'success');
+            };
+            // Only set picture_url from text field if no file pending
+            if (!pendingPhotoFile) {
+                details.picture_url = document.getElementById('fPictureUrl').value.trim();
+            }
+            await api(`/api/teams/${editingTeamId}/details`, 'PUT', details);
         } else {
             // ADD new team
             const id = parseInt(document.getElementById('fTeamId').value);
@@ -550,17 +623,35 @@ async function saveTeam() {
             }
             await api('/api/teams', 'POST', {
                 id, name, proxy_port: port,
-                picture_url: document.getElementById('fPictureUrl').value.trim(),
+                picture_url: pendingPhotoFile ? '' : document.getElementById('fPictureUrl').value.trim(),
                 algorithm_description: document.getElementById('fAlgoDesc').value.trim(),
                 members: currentMembers,
             });
-            showToast('Ekipa dodana.', 'success');
+            teamId = id;
         }
+
+        // Upload photo if a file is pending
+        if (pendingPhotoFile && teamId) {
+            await uploadPhoto(teamId, pendingPhotoFile);
+        }
+
+        showToast(editingTeamId !== null ? 'Ekipa posodobljena.' : 'Ekipa dodana.', 'success');
         closeModal();
         await loadTeams();
     } catch (e) {
         showToast('Napaka: ' + e.message, 'error');
     }
+}
+
+async function uploadPhoto(teamId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`/api/teams/${teamId}/photo`, { method: 'POST', body: formData });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Napaka pri nalaganju slike: HTTP ${res.status}`);
+    }
+    return res.json();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -606,17 +697,87 @@ function focusMemberInput() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PICTURE PREVIEW
+// PHOTO UPLOAD & PREVIEW
 // ═══════════════════════════════════════════════════════════════
+function handlePhotoSelect(input) {
+    if (input.files && input.files[0]) {
+        setPhotoFile(input.files[0]);
+    }
+}
+
+function handlePhotoDrop(e) {
+    e.preventDefault();
+    document.getElementById('photoUploadArea').classList.remove('dragover');
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        setPhotoFile(file);
+    }
+}
+
+function setPhotoFile(file) {
+    pendingPhotoFile = file;
+    const area = document.getElementById('photoUploadArea');
+    area.classList.add('has-file');
+    const sizeKB = (file.size / 1024).toFixed(0);
+    const sizeStr = file.size > 1024 * 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
+    const objectUrl = URL.createObjectURL(file);
+    area.querySelector('#photoUploadContent').innerHTML = `<div class="photo-upload-thumb">
+        <img src="${objectUrl}" alt="preview">
+        <div class="info">
+            <div class="name">${esc(file.name)}</div>
+            <div class="size">${sizeStr}</div>
+        </div>
+        <span class="remove-photo" onclick="event.stopPropagation(); clearPhotoFile()" title="Odstrani">&times;</span>
+    </div>`;
+    // Clear URL field since file takes priority
+    document.getElementById('fPictureUrl').value = '';
+    document.getElementById('picturePreview').innerHTML = '';
+}
+
+function showPhotoInUploadArea(url, label) {
+    const area = document.getElementById('photoUploadArea');
+    area.classList.add('has-file');
+    area.querySelector('#photoUploadContent').innerHTML = `<div class="photo-upload-thumb">
+        <img src="${esc(url)}" alt="current" onerror="this.style.display='none'">
+        <div class="info">
+            <div class="name">${esc(label || url.split('/').pop())}</div>
+            <div class="size" style="color:var(--success);">Naloženo</div>
+        </div>
+        <span class="remove-photo" onclick="event.stopPropagation(); clearPhotoFile()" title="Odstrani">&times;</span>
+    </div>`;
+}
+
+function clearPhotoFile() {
+    pendingPhotoFile = null;
+    document.getElementById('fPhotoFile').value = '';
+    resetPhotoUploadArea();
+}
+
+function resetPhotoUploadArea() {
+    const area = document.getElementById('photoUploadArea');
+    area.classList.remove('has-file');
+    area.querySelector('#photoUploadContent').innerHTML = `
+        <div style="font-size:1.5rem;margin-bottom:4px;">📷</div>
+        <div style="font-size:0.8rem;font-weight:600;">Kliknite ali povlecite sliko</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">JPEG, PNG, GIF, WebP · Maks. 5 MB</div>`;
+}
+
+function toggleUrlInput() {
+    const input = document.getElementById('fPictureUrl');
+    input.style.display = input.style.display === 'none' ? '' : 'none';
+    if (input.style.display !== 'none') input.focus();
+}
+
 function updatePicturePreview() {
     const url = document.getElementById('fPictureUrl').value.trim();
     const el = document.getElementById('picturePreview');
-    if (url) {
-        el.innerHTML = `<img src="${esc(url)}" onerror="this.outerHTML='<div class=no-preview>✕</div>'">
-                         <span style="font-size:0.75rem;color:var(--text-muted);">Predogled</span>`;
+    if (url && !pendingPhotoFile) {
+        el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
+            <img src="${esc(url)}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--card-border);" onerror="this.outerHTML='<span style=color:var(--danger);font-size:0.75rem>✕ Neveljavna slika</span>'">
+            <span style="font-size:0.75rem;color:var(--text-muted);">Predogled URL</span>
+        </div>`;
     } else {
-        el.innerHTML = `<div class="no-preview">—</div>
-                         <span style="font-size:0.75rem;color:var(--text-muted);">Predogled</span>`;
+        el.innerHTML = '';
     }
 }
 
@@ -639,7 +800,7 @@ function confirmDelete(id, name) {
             showToast('Napaka: ' + e.message, 'error');
         }
     };
-    okBtn.onclick = () => { closeConfirm(); if (confirmCallback) confirmCallback(); };
+    okBtn.onclick = () => { const cb = confirmCallback; closeConfirm(); if (cb) cb(); };
     document.getElementById('confirmDialog').classList.add('open');
 }
 

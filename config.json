@@ -5,7 +5,7 @@
             "name": "Team 1",
             "proxy_port": 24001,
             "enabled": true,
-            "picture_url": "https://picsum.photos/id/1/400/400",
+            "picture_url": "/static/photos/team_1_38fc3cb0.png",
             "algorithm_description": "Na\u0161 algoritem temelji na globokem u\u010denju.",
             "members": []
         },
@@ -59,7 +59,7 @@
             "name": "Team 7",
             "proxy_port": 24007,
             "enabled": false,
-            "picture_url": "",
+            "picture_url": "/static/photos/team_7_bfd504a3.png",
             "algorithm_description": "",
             "members": []
         },
@@ -103,22 +103,10 @@
             "id": 12,
             "name": "Team 12",
             "proxy_port": 24012,
-            "enabled": false,
+            "enabled": true,
             "picture_url": "",
             "algorithm_description": "",
             "members": []
-        },
-        {
-            "id": 13,
-            "name": "AlphaKick",
-            "proxy_port": 24013,
-            "enabled": true,
-            "picture_url": "",
-            "algorithm_description": "Opis",
-            "members": [
-                "Ena",
-                "Dva"
-            ]
         }
     ],
     "simulators": [
