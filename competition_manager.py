@@ -878,7 +878,12 @@ def set_tournament_phase(phase: str, confirmed: bool = False, cursor=None):
 
 
 def get_head_to_head_goals(team1_id: int, team2_id: int):
-    """Get head-to-head qualification goals between two teams."""
+    """Get head-to-head qualification goals between two teams.
+
+    A qualifying duel consists of exactly 2 games (home & away). Only the
+    first completed duel (first 2 games ordered by id/created_at) is used,
+    consistent with how compute_qualification_standings works.
+    """
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -886,6 +891,8 @@ def get_head_to_head_goals(team1_id: int, team2_id: int):
         SELECT red_team_id, blue_team_id, score_red, score_blue
         FROM game_results
         WHERE (red_team_id = ? AND blue_team_id = ?) OR (red_team_id = ? AND blue_team_id = ?)
+        ORDER BY id ASC
+        LIMIT 2
     """, (team1_id, team2_id, team2_id, team1_id))
     games = cursor.fetchall()
     conn.close()
@@ -946,27 +953,35 @@ async def generate_tournament_pairs(team_count: int = Query(default=8, ge=2)):
     cursor.execute("DELETE FROM tournament_games WHERE pair_id IN (SELECT id FROM tournament_pairs)")
     cursor.execute("DELETE FROM tournament_pairs")
 
-    # Build seeding for standard single-elimination bracket.
-    # Positions in the first round: pair seeds so 1 vs bracket_size, 2 vs bracket_size-1, etc.
-    # Teams with seed <= num_byes get a BYE (no first-round match).
-    # The rest play in the first round.
-    #
-    # E.g. 5 teams, bracket_size=8, num_byes=3:
-    #   Seeds 1,2,3 get byes. Seeds 4,5 play in first round.
-    #   Bracket: seed 1 vs BYE, seed 4 vs seed 5, seed 3 vs BYE, seed 2 vs BYE
-    #   -> Only one actual match in first round: seed 4 vs seed 5
-    #   -> Quarter-finals: 1 vs winner(4v5), 3 vs BYE-winner, 2 vs BYE-winner
-    #
-    # E.g. 8 teams, bracket_size=8, num_byes=0:
-    #   All 8 teams play in first round: 1v8, 4v5, 3v6, 2v7
+    # Build seeding using standard tournament bracket placement.
+    # Uses recursive splitting so top seeds are maximally separated:
+    #   8-team: 1v8, 4v5, 3v6, 2v7  (seeds 1&2 on opposite halves)
+    #   16-team: 1v16, 8v9, 4v13, 5v12, 3v14, 6v11, 7v10, 2v15
+    # This ensures seed 1 and 2 can only meet in the final.
+    def standard_bracket_order(n):
+        """Return list of (seed_a, seed_b) matchups in standard bracket order."""
+        if n == 1:
+            return [1]
+        prev = standard_bracket_order(n // 2)
+        result = []
+        for seed in prev:
+            result.append(seed)
+            result.append(n + 1 - seed)
+        return result
+
+    bracket_seeds = standard_bracket_order(bracket_size)
+    # bracket_seeds is a flat list: [1, 8, 4, 5, 3, 6, 2, 7] for bracket_size=8
+    # Group into pairs: (1,8), (4,5), (3,6), (2,7)
+    matchups = []
+    for i in range(0, len(bracket_seeds), 2):
+        matchups.append((bracket_seeds[i], bracket_seeds[i + 1]))
 
     # Generate ALL bracket slots (including BYEs)
     # BYE matches are stored as auto-completed pairs so advance_bracket works uniformly.
     half = bracket_size // 2
     real_match_count = 0
     for i in range(half):
-        seed_a = i + 1  # 1-based seed
-        seed_b = bracket_size - i  # mirror seed
+        seed_a, seed_b = matchups[i]
 
         team_a = top_teams[seed_a - 1] if seed_a <= team_count else None
         team_b = top_teams[seed_b - 1] if seed_b <= team_count else None
@@ -1542,6 +1557,11 @@ async def override_pair_score(pair_id: int, override: OverrideScore):
             t1_seed = pair.get("team1_seed") or 999
             t2_seed = pair.get("team2_seed") or 999
             winner_id = t1_id if t1_seed <= t2_seed else t2_id
+
+        # Propagate winner change to next-round pairs if winner changed
+        if pair.get("winner_id") and pair["winner_id"] != winner_id:
+            propagate_winner_change(cursor, pair, winner_id)
+
         cursor.execute("UPDATE tournament_pairs SET winner_id = ? WHERE id = ?", (winner_id, pair_id))
 
     conn.commit()
@@ -1585,6 +1605,11 @@ async def clear_pair_override(pair_id: int):
     if all_completed and pair.get("team1_id") and pair.get("team2_id"):
         duel = compute_duel_score(pair, cursor)
         winner_id = determine_winner(pair, duel)
+
+        # Propagate winner change to next-round pairs if winner changed
+        if pair.get("winner_id") and pair["winner_id"] != winner_id:
+            propagate_winner_change(cursor, pair, winner_id)
+
         cursor.execute("UPDATE tournament_pairs SET winner_id = ? WHERE id = ?", (winner_id, pair_id))
 
     conn.commit()
@@ -1595,6 +1620,105 @@ async def clear_pair_override(pair_id: int):
 
     await broadcast_viz_update()
     return updated_pair
+
+
+def propagate_winner_change(cursor, pair_dict, new_winner_id):
+    """After a winner changes (override / clear-override), propagate to next-round pairs.
+    
+    Finds the next-round pair that this pair feeds into and replaces the old winner
+    with the new winner. Also handles semi_final → final and third_place propagation.
+    """
+    current_round = pair_dict["round"]
+    match_index = pair_dict["match_index"]
+    old_winner_id = pair_dict.get("winner_id")  # the winner BEFORE this update
+
+    # Get the old winner's info
+    if old_winner_id == pair_dict["team1_id"]:
+        old_winner = {"id": pair_dict["team1_id"], "name": pair_dict["team1_name"], "seed": pair_dict["team1_seed"]}
+        old_loser = {"id": pair_dict["team2_id"], "name": pair_dict["team2_name"], "seed": pair_dict["team2_seed"]}
+    else:
+        old_winner = {"id": pair_dict["team2_id"], "name": pair_dict["team2_name"], "seed": pair_dict["team2_seed"]}
+        old_loser = {"id": pair_dict["team1_id"], "name": pair_dict["team1_name"], "seed": pair_dict["team1_seed"]}
+
+    # New winner/loser info
+    if new_winner_id == pair_dict["team1_id"]:
+        new_winner = {"id": pair_dict["team1_id"], "name": pair_dict["team1_name"], "seed": pair_dict["team1_seed"]}
+        new_loser = {"id": pair_dict["team2_id"], "name": pair_dict["team2_name"], "seed": pair_dict["team2_seed"]}
+    else:
+        new_winner = {"id": pair_dict["team2_id"], "name": pair_dict["team2_name"], "seed": pair_dict["team2_seed"]}
+        new_loser = {"id": pair_dict["team1_id"], "name": pair_dict["team1_name"], "seed": pair_dict["team1_seed"]}
+
+    if old_winner_id == new_winner_id:
+        return  # No change
+
+    # Determine round progression
+    round_names, _, _ = get_bracket_round_names()
+    competitive_rounds = [r for r in round_names if r not in ("third_place", "final")]
+
+    if current_round == "semi_final":
+        # Winner goes to final, loser goes to third_place
+        # Update final: replace old_winner with new_winner
+        cursor.execute("SELECT * FROM tournament_pairs WHERE round = 'final'", ())
+        final_rows = [dict(r) for r in cursor.fetchall()]
+        for fp in final_rows:
+            if fp["team1_id"] == old_winner["id"]:
+                cursor.execute(
+                    "UPDATE tournament_pairs SET team1_id = ?, team1_name = ?, team1_seed = ? WHERE id = ?",
+                    (new_winner["id"], new_winner["name"], new_winner["seed"], fp["id"])
+                )
+            elif fp["team2_id"] == old_winner["id"]:
+                cursor.execute(
+                    "UPDATE tournament_pairs SET team2_id = ?, team2_name = ?, team2_seed = ? WHERE id = ?",
+                    (new_winner["id"], new_winner["name"], new_winner["seed"], fp["id"])
+                )
+
+        # Update third_place: replace old_loser with new_loser
+        cursor.execute("SELECT * FROM tournament_pairs WHERE round = 'third_place'", ())
+        third_rows = [dict(r) for r in cursor.fetchall()]
+        for tp in third_rows:
+            if tp["team1_id"] == old_loser["id"]:
+                cursor.execute(
+                    "UPDATE tournament_pairs SET team1_id = ?, team1_name = ?, team1_seed = ? WHERE id = ?",
+                    (new_loser["id"], new_loser["name"], new_loser["seed"], tp["id"])
+                )
+            elif tp["team2_id"] == old_loser["id"]:
+                cursor.execute(
+                    "UPDATE tournament_pairs SET team2_id = ?, team2_name = ?, team2_seed = ? WHERE id = ?",
+                    (new_loser["id"], new_loser["name"], new_loser["seed"], tp["id"])
+                )
+        return
+
+    # For other rounds: winner feeds into next round
+    if current_round in competitive_rounds:
+        idx = competitive_rounds.index(current_round)
+        if idx + 1 < len(competitive_rounds):
+            next_round = competitive_rounds[idx + 1]
+        else:
+            next_round = "semi_final"  # last competitive feeds semi
+    else:
+        return  # third_place/final don't propagate further
+
+    next_match_idx = match_index // 2
+
+    cursor.execute(
+        "SELECT * FROM tournament_pairs WHERE round = ? AND match_index = ?",
+        (next_round, next_match_idx)
+    )
+    next_row = cursor.fetchone()
+    if not next_row:
+        return
+    np = dict(next_row)
+
+    if np["team1_id"] == old_winner["id"]:
+        cursor.execute(
+            "UPDATE tournament_pairs SET team1_id = ?, team1_name = ?, team1_seed = ? WHERE id = ?",
+            (new_winner["id"], new_winner["name"], new_winner["seed"], np["id"])
+        )
+    elif np["team2_id"] == old_winner["id"]:
+        cursor.execute(
+            "UPDATE tournament_pairs SET team2_id = ?, team2_name = ?, team2_seed = ? WHERE id = ?",
+            (new_winner["id"], new_winner["name"], new_winner["seed"], np["id"])
+        )
 
 
 def determine_winner(pair_dict, duel_score):

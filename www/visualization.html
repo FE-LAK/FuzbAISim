@@ -310,8 +310,20 @@
         }
 
         .bp.bye-slot {
-            opacity: 0;
-            pointer-events: none;
+            /* Card itself stays fully visible */
+        }
+
+        .bp.bye-slot .bt.bye-row {
+            opacity: 0.25;
+        }
+
+        .bp.bye-slot .bt.bye-row .bt-name {
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        .bp.bye-slot .bp-vs {
+            opacity: 0.2;
         }
 
         /* ── Team row inside a card ── */
@@ -1616,22 +1628,24 @@
         const hasThird = roundNames.includes('third_place');
 
         // Card sizing
-        const CARD_H = 56;
+        const CARD_H = 68;
         const LABEL_H = 28;
         const GAP = 16; // horizontal gap for connectors
 
         // Compute column widths and positions
-        const colW = Math.min(240, (W - (numCols - 1) * GAP) / numCols);
+        // Reserve space on the right for 3rd place if needed
+        const thirdPlaceExtraW = hasThird ? 60 : 0;
+        const colW = Math.min(240, (W - (numCols - 1) * GAP - thirdPlaceExtraW) / numCols);
 
-        // For 3rd place, we position it below the final
-        // Columns layout with even spacing
+        // Columns layout — shift left a bit if 3rd place is present
         const totalGridW = numCols * colW + (numCols - 1) * GAP;
-        const offsetX = (W - totalGridW) / 2;
+        const offsetX = hasThird ? (W - totalGridW - thirdPlaceExtraW) / 2 : (W - totalGridW) / 2;
 
         function colX(col) { return offsetX + col * (colW + GAP); }
 
         // Build a slot map: for each round, compute vertical center positions
-        // First round: evenly distributed
+        // Use recursive centering: first round evenly spaced, subsequent rounds
+        // centered between the two parent slots that feed into them
         const usableH = H - LABEL_H - 20; // reserve top for labels and bottom margin
         const topPad = LABEL_H + 10;
 
@@ -1652,26 +1666,41 @@
                 slots.push({ pair, isBye: !!isBye });
             }
 
-            // Vertical distribution: center each slot
             const n = slots.length || 1;
-            const slotSpacing = usableH / n;
             const positions = [];
 
-            slots.forEach((slot, i) => {
-                const cy = topPad + slotSpacing * i + slotSpacing / 2;
-                positions.push({ cy, ...slot });
+            if (colIdx === 0) {
+                // First round: evenly distributed
+                const slotSpacing = usableH / n;
+                slots.forEach((slot, i) => {
+                    const cy = topPad + slotSpacing * i + slotSpacing / 2;
+                    positions.push({ cy, ...slot });
+                });
+            } else {
+                // Subsequent rounds: center between the two parent slots
+                const prevPositions = slotPositions[colIdx - 1];
+                slots.forEach((slot, i) => {
+                    const topParentIdx = i * 2;
+                    const botParentIdx = i * 2 + 1;
+                    const topCy = prevPositions[topParentIdx] ? prevPositions[topParentIdx].cy : 0;
+                    const botCy = prevPositions[botParentIdx] ? prevPositions[botParentIdx].cy : topCy;
+                    const cy = (topCy + botCy) / 2;
+                    positions.push({ cy, ...slot });
+                });
+            }
 
+            positions.forEach((pos, i) => {
                 const x = colX(colIdx);
-                const y = cy - CARD_H / 2;
+                const y = pos.cy - CARD_H / 2;
 
                 allCards.push({
                     col: colIdx, x, y, w: colW, h: CARD_H,
-                    pair: slot.pair, isBye: slot.isBye,
-                    isUpcoming: slot.pair && !slot.pair.winner_id && !activePairs.has(slot.pair?.id),
-                    isActive: slot.pair && activePairs.has(slot.pair.id),
+                    pair: pos.pair, isBye: pos.isBye,
+                    isUpcoming: pos.pair && !pos.pair.winner_id && !activePairs.has(pos.pair?.id),
+                    isActive: pos.pair && activePairs.has(pos.pair.id),
                     roundKey,
                     slotIdx: i,
-                    cy,
+                    cy: pos.cy,
                 });
             });
 
@@ -1739,16 +1768,20 @@
         let thirdCard = null;
         if (hasThird && bracket['third_place'] && bracket['third_place'].pairs && bracket['third_place'].pairs.length > 0) {
             const thirdPair = bracket['third_place'].pairs[0];
-            // Position: below the final, in the last column
+            // Position: to the right of the finals column, vertically near the bottom semi-final
             const lastCol = numCols - 1;
             const finalSlots = slotPositions[lastCol];
-            const finalCy = finalSlots.length > 0 ? finalSlots[finalSlots.length - 1].cy : H / 2;
-            const thirdY = finalCy + CARD_H / 2 + 40;
+            const finalCy = finalSlots.length > 0 ? finalSlots[0].cy : H / 2;
+            // Place 3rd-place match well below the final, with clear separation
+            const semiSlots = slotPositions[lastCol - 1];
+            const bottomSemiCy = semiSlots && semiSlots.length > 1 ? semiSlots[semiSlots.length - 1].cy : finalCy + 150;
+            const thirdCy = bottomSemiCy + CARD_H + 20;
             thirdCard = {
                 x: colX(lastCol),
-                y: thirdY,
+                y: thirdCy - CARD_H / 2,
                 w: colW,
                 h: CARD_H,
+                cy: thirdCy,
                 pair: thirdPair,
                 isBye: false,
                 isActive: activePairs.has(thirdPair.id),
@@ -1785,13 +1818,17 @@
             else if (hasWinner) cardCls += ' completed';
             else cardCls += ' upcoming';
 
-            const t1cls = hasWinner ? (t1win ? 'bt winner' : 'bt loser') : 'bt';
-            const t2cls = hasWinner ? (t2win ? 'bt winner' : 'bt loser') : 'bt';
+            let t1cls = hasWinner ? (t1win ? 'bt winner' : 'bt loser') : 'bt';
+            let t2cls = hasWinner ? (t2win ? 'bt winner' : 'bt loser') : 'bt';
 
-            const t1name = p.team1_name || '?';
-            const t2name = p.team2_name || '?';
-            const t1seed = p.team1_seed ? `#${p.team1_seed}` : '';
-            const t2seed = p.team2_seed ? `#${p.team2_seed}` : '';
+            const isByeT1 = p.team1_name === 'BYE' || !p.team1_id;
+            const isByeT2 = p.team2_name === 'BYE' || !p.team2_id;
+            if (isByeT1) t1cls += ' bye-row';
+            if (isByeT2) t2cls += ' bye-row';
+            const t1name = isByeT1 ? '—' : (p.team1_name || '?');
+            const t2name = isByeT2 ? '—' : (p.team2_name || '?');
+            const t1seed = (!isByeT1 && p.team1_seed) ? `#${p.team1_seed}` : '';
+            const t2seed = (!isByeT2 && p.team2_seed) ? `#${p.team2_seed}` : '';
 
             const t1pts = p.duel_score ? p.duel_score.team1_total_points : null;
             const t2pts = p.duel_score ? p.duel_score.team2_total_points : null;
@@ -1826,7 +1863,7 @@
 
         // Third place
         if (thirdCard) {
-            html += `<div class="bracket-round-label" style="left:${thirdCard.x}px;top:${thirdCard.y - 20}px;width:${thirdCard.w}px;">Tekma za 3. mesto</div>`;
+            html += `<div class="bracket-round-label" style="left:${thirdCard.x}px;top:${thirdCard.y - 24}px;width:${thirdCard.w}px;">Tekma za 3. mesto</div>`;
             html += renderCard(thirdCard);
         }
 
@@ -1931,19 +1968,19 @@
             const q2half = (q2 * 0.5).toFixed(1).replace(/\.0$/, '');
             // Team 1 display
             if (q1 > q2) {
-                adv1El.textContent = `Prednost iz kvalifikacij: +${q1half}`;
+                adv1El.textContent = `Goli iz kvalifikacij: +${q1half}`;
                 adv1El.style.color = 'hsl(155, 65%, 50%)';
             } else {
-                adv1El.textContent = `Zaostanek iz kvalifikacij: +${q1half}`;
+                adv1El.textContent = `Goli iz kvalifikacij: +${q1half}`;
                 adv1El.style.color = 'hsl(0, 75%, 60%)';
             }
             adv1El.classList.add('visible');
             // Team 2 display
             if (q2 > q1) {
-                adv2El.textContent = `Prednost iz kvalifikacij: +${q2half}`;
+                adv2El.textContent = `Goli iz kvalifikacij: +${q2half}`;
                 adv2El.style.color = 'hsl(155, 65%, 50%)';
             } else {
-                adv2El.textContent = `Zaostanek iz kvalifikacij: +${q2half}`;
+                adv2El.textContent = `Goli iz kvalifikacij: +${q2half}`;
                 adv2El.style.color = 'hsl(0, 75%, 60%)';
             }
             adv2El.classList.add('visible');
@@ -2097,23 +2134,36 @@
             membersEl.textContent = '';
         }
 
-        // Bracket info
+        // Bracket info — show the most advanced round the team reached
         const bracketInfoEl = document.getElementById('team-bracket-info');
         if (bracketData && bracketData.bracket) {
-            let foundRound = null;
-            outer:
+            let bestRound = null;
+            let isEliminated = false;
+            // Iterate all rounds; keep updating to find the latest (most advanced) round
             for (const roundKey of Object.keys(bracketData.bracket)) {
                 const round = bracketData.bracket[roundKey];
                 if (!round.pairs) continue;
                 for (const p of round.pairs) {
                     if (p.team1_id === teamId || p.team2_id === teamId) {
-                        foundRound = roundKey;
-                        break outer;
+                        bestRound = roundKey;
+                        // Check if eliminated in this round
+                        if (p.winner_id && p.winner_id !== teamId) {
+                            isEliminated = true;
+                        } else {
+                            isEliminated = false;
+                        }
                     }
                 }
             }
-            if (foundRound) {
-                bracketInfoEl.textContent = `Turnir: ${ROUND_NAMES[foundRound] || foundRound}`;
+            if (bestRound) {
+                const roundLabel = ROUND_NAMES[bestRound] || bestRound;
+                if (isEliminated) {
+                    bracketInfoEl.textContent = `Izpadel v: ${roundLabel}`;
+                } else if (bestRound === 'final' || bestRound === 'third_place') {
+                    bracketInfoEl.textContent = `Turnir: ${roundLabel}`;
+                } else {
+                    bracketInfoEl.textContent = `Turnir: ${roundLabel}`;
+                }
             } else {
                 bracketInfoEl.textContent = '';
             }

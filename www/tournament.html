@@ -1800,7 +1800,6 @@ function renderActiveGame() {
                 <div class="game-team-seed">Seed #${rightSeed || '?'} · <span style="color:hsl(215,80%,60%);font-size:0.7rem;font-weight:700;">MODRA</span></div>
             </div>
         </div>
-        ${duelCtx}
         <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:20px;">
             <div class="team-action-col">
                 <button class="goal-btn" onclick="scoreGoal(${game.id}, ${leftApiTeam})">⚽ Gol</button>
@@ -1828,6 +1827,7 @@ function renderActiveGame() {
                 ${rightFoulAutoWarn}
             </div>
         </div>
+        ${duelCtx}
         <div class="game-actions">
             <button class="btn btn-success" onclick="confirmResult(${game.id})">✓ Zaključi igro</button>
         </div>
@@ -1867,12 +1867,14 @@ function buildDuelContext(game) {
         ? `<div class="duel-row" style="justify-content:flex-end;gap:8px;"><span class="duel-row-val">${t2FoulsTotal}${t2FoulPts > 0 ? ` <span style="color:var(--warning);font-size:11px;">(+${formatPts(t2FoulPts)} t.)</span>` : ''}</span><span class="duel-row-label">Skupaj prekrškov</span></div>` : '';
 
     // Game score display in duel context
+    // Game 1: team1=Rdeča(left), team2=Modra(right)
+    // Game 2: sides swap — team2=Rdeča(left), team1=Modra(right)
     const g1Score = g1 ? `<div style="font-size:1.1rem;font-weight:700;">I: <span style="color:hsl(0,70%,70%)">${g1.team1_score ?? '?'}</span>:<span style="color:hsl(215,70%,70%)">${g1.team2_score ?? '?'}</span></div>` : '';
-    const g2Score = g2 ? `<div style="font-size:1.1rem;font-weight:700;">II: <span style="color:hsl(0,70%,70%)">${g2.team1_score ?? '?'}</span>:<span style="color:hsl(215,70%,70%)">${g2.team2_score ?? '?'}</span></div>` : '';
+    const g2Score = g2 ? `<div style="font-size:1.1rem;font-weight:700;">II: <span style="color:hsl(215,70%,70%)">${g2.team1_score ?? '?'}</span>:<span style="color:hsl(0,70%,70%)">${g2.team2_score ?? '?'}</span></div>` : '';
 
     return `<div class="duel-context">
         <div>
-            <div style="font-size:11px;font-weight:700;color:hsl(0,70%,60%);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">${t1Name} (Rdeča)</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">${t1Name}</div>
             <div class="duel-row"><span class="duel-row-label">Turnirski goli</span><span class="duel-row-val">${ds.team1_tournament_goals ?? 0}</span></div>
             <div class="duel-row"><span class="duel-row-label">Kvali. goli (×0.5)</span><span class="duel-row-val">${ds.team1_qual_goals ?? 0}</span></div>
             ${t1FoulRow}
@@ -1884,7 +1886,7 @@ function buildDuelContext(game) {
             ${g2Score}
         </div>
         <div style="text-align:right;">
-            <div style="font-size:11px;font-weight:700;color:hsl(215,70%,60%);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">${t2Name} (Modra)</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">${t2Name}</div>
             <div class="duel-row" style="justify-content:flex-end;gap:8px;"><span class="duel-row-val">${ds.team2_tournament_goals ?? 0}</span><span class="duel-row-label">Turnirski goli</span></div>
             <div class="duel-row" style="justify-content:flex-end;gap:8px;"><span class="duel-row-val">${ds.team2_qual_goals ?? 0}</span><span class="duel-row-label">Kvali. goli (×0.5)</span></div>
             ${t2FoulRow}
